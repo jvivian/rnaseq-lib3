@@ -1,0 +1,5 @@
+name: rnaseq-lib3
+dependencies:
+- python=3
+- synapseclient
+-

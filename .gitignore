@@ -1,0 +1,6 @@
+# User-specific stuff:
+.idea/**/workspace.xml
+
+*.pyc
+src/rnaseq_lib3.egg-info
+dist/
