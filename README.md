@@ -1,3 +1,3 @@
 # rnaseq-lib3
-## Convenience functions RNA-seq thesis work
+## Convenience functions for RNA-seq thesis work
 
