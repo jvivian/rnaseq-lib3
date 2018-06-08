@@ -7,10 +7,19 @@ from src.rnaseq_lib3.utils import rget
 
 
 def get_genes_from_pathway(pathway: str) -> set:
-    kgml = _get(pathway, form='kgml').text
+    # Find pathway name
+    kegg_path = _find(database='pathway', query=pathway).text
+    if kegg_path == '\n':
+        raise RuntimeError(f'Pathway {pathway} not found')
+
+    # Extract HSA version of pathway
+    kegg_path, description = kegg_path.split('\t')
+    kegg_path = 'hsa' + ''.join(x for x in kegg_path if x.isnumeric())
+
+    kgml = _get(kegg_path, form='kgml').text
 
     # Wrap text in a file handle for KGML parser
-    f = io.BytesIO(kgml.encode('utf-8'))
+    f = io.StringIO(kgml)
     k = KGML_parser.read(f)
 
     genes = set()
@@ -32,14 +41,19 @@ def get_gene_names_from_label(label: str) -> set:
     return genes
 
 
-def _get(query: str, form=None):
-    return _kegg_search(operation='get', database='', query=query, form=form)
+def _find(database: str, query: str):
+    return _kegg_search(operation='find', database=database, query=query)
 
 
-def _kegg_search(operation: str, database: str, query=None, form=None):
+def _get(query: str, database=None, form=None):
+    return _kegg_search(operation='get', database=database, query=query, form=form)
+
+
+def _kegg_search(operation: str, database=None, query=None, form=None):
     # Set arguments to empty strings if None
     query = '' if query is None else query
     form = '' if form is None else form
+    database = '' if database is None else database
 
     # Define base URL
     url = 'http://rest.kegg.jp'
