@@ -4,7 +4,7 @@ import os
 from Bio.KEGG.KGML import KGML_parser
 from requests.models import Response
 
-from src.rnaseq_lib3.utils import rget
+from rnaseq_lib3.utils import rget
 
 
 def pathway_genes(pathway: str) -> set:
