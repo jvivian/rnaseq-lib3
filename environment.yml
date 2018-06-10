@@ -2,6 +2,8 @@ name: rnaseq-lib3
 dependencies:
 - python=3
 - anaconda
+- biopython
 - pip:
   - synapseclient
   - annoy
+
