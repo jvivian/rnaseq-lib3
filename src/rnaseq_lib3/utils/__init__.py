@@ -1,15 +1,8 @@
 import requests
 
 
-def rget(url, params=None):
-    """
-    Wrapper for requests.get that checks status code
-
-    :param str url: Request URL
-    :param dict params: Parameters for request
-    :return: Request from URL or None if status code != 200
-    :rtype: requests.models.Response
-    """
+def rget(url, params=None) -> requests.models.Response:
+    """requests.get wrapper that checks status code for 200 or returns None"""
     r = requests.get(url, params=params)
     if r.status_code != 200:
         return None
