@@ -2,11 +2,13 @@ import io
 import os
 
 from Bio.KEGG.KGML import KGML_parser
+from requests.models import Response
 
 from src.rnaseq_lib3.utils import rget
 
 
-def get_genes_from_pathway(pathway: str) -> set:
+def pathway_genes(pathway: str) -> set:
+    """Returns genes for a given pathway in KEGG"""
     # Find pathway name
     kegg_path = _find(database='pathway', query=pathway).text
     if kegg_path == '\n':
@@ -25,13 +27,14 @@ def get_genes_from_pathway(pathway: str) -> set:
     genes = set()
     for gene in k.genes:
         for x in gene.name.split():
-            g = get_gene_names_from_label(x)
+            g = kegg_label_gene_names(x)
             genes = genes.union(g)
 
     return genes
 
 
-def get_gene_names_from_label(label: str) -> set:
+def kegg_label_gene_names(label: str) -> set:
+    """Extracts gene name from KEGG label"""
     genes = set()
     r = _get(label)
     for line in r.text.split('\n'):
@@ -41,15 +44,18 @@ def get_gene_names_from_label(label: str) -> set:
     return genes
 
 
-def _find(database: str, query: str):
-    return _kegg_search(operation='find', database=database, query=query)
+def _find(database: str, query: str) -> Response:
+    """Kegg 'find' wrapper"""
+    return _kegg_query(operation='find', database=database, query=query)
 
 
-def _get(query: str, database=None, form=None):
-    return _kegg_search(operation='get', database=database, query=query, form=form)
+def _get(query: str, database: str = None, form: str = None) -> Response:
+    """KEGG 'get' wrapper"""
+    return _kegg_query(operation='get', database=database, query=query, form=form)
 
 
-def _kegg_search(operation: str, database=None, query=None, form=None):
+def _kegg_query(operation: str, database: str = None, query: str = None, form: str = None) -> Response:
+    """Runs Kegg API query"""
     # Set arguments to empty strings if None
     query = '' if query is None else query
     form = '' if form is None else form
