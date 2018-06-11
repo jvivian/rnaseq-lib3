@@ -11,6 +11,7 @@ subtype_abbrev = {
     'CHOL': 'Cholangiocarcinoma',
     'LCML': 'Chronic Myelogenous Leukemia',
     'COAD': 'Colon adenocarcinoma',
+    'COADRED': 'Colorectal adenocarcinoma',
     'CNTL': 'Controls',
     'ESCA': 'Esophageal carcinoma',
     'FPPP': 'FFPE Pilot Phase II',
