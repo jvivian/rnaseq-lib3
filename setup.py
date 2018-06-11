@@ -8,4 +8,5 @@ setup(name='rnaseq-lib3',
       author_email='jtvivian@gmail.com',
       license='MIT',
       package_dir={'': 'src'},
-      packages=find_packages('src'))
+      packages=find_packages('src'), install_requires=['requests', 'scikit-learn', 'numba', 'annoy', 'numpy',
+                                                       'synapseclient', 'pandas'])
