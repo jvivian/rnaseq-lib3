@@ -82,7 +82,7 @@ def mutation_sample_map(snv: pd.DataFrame, gene: str, mutations: List[str]) -> p
 
     # Convert to DataFrame
     df = pd.DataFrame(list({x: k for k, v in s.items() for x in v}.items()), columns=['Sample', 'Mutation'])
-    df.set_index('Sample')
+    df = df.set_index('Sample')
     df.index.name = None
     return df
 
