@@ -69,8 +69,8 @@ def subtype_filter(metadata: pd.DataFrame, samples: List[str], subtypes: List[st
     return set(samples).intersection(set(sub.id))
 
 
-def sample_for_mutation_list(snv: pd.DataFrame, gene: str, mutations: List[str]) -> Set[str]:
-    """"""
+def samples_for_mutation_list(snv: pd.DataFrame, gene: str, mutations: List[str]) -> Set[str]:
+    """Identify samples with a given set of mutations in a particular gene"""
     # Subset by variant type and mutation
     sub = snv[(snv.SYMBOL == gene) & (snv.Variant_Type == 'SNP')]
 
@@ -79,3 +79,14 @@ def sample_for_mutation_list(snv: pd.DataFrame, gene: str, mutations: List[str])
     for mut in mutations:
         samples.update([x[:15] for x in sub[sub.HGVSp_Short == mut].Tumor_Sample_Barcode])
     return samples
+
+
+def pathway_from_gene(driver_pathway_path: str, gene: str) -> str:
+    """Returns TCGA cancer driver pathway for a given gene"""
+    path = pd.read_csv(driver_pathway_path, sep='\t')
+    pathway = path[path.gene == gene].Pathway.unique()
+    if len(pathway) != 1:
+        print(f'More than 1 pathway found: {pathway}')
+        return pathway
+    else:
+        return pathway[0]
