@@ -9,16 +9,7 @@ from rnaseq_lib3.utils import rget
 
 def pathway_genes(pathway: str) -> set:
     """Returns genes for a given pathway in KEGG"""
-    # Find pathway name
-    kegg_path = _find(database='pathway', query=pathway).text
-    if kegg_path == '\n':
-        raise RuntimeError(f'Pathway {pathway} not found')
-
-    # Extract HSA version of pathway
-    kegg_path, description = kegg_path.split('\t')
-    kegg_path = 'hsa' + ''.join(x for x in kegg_path if x.isnumeric())
-
-    kgml = _get(kegg_path, form='kgml').text
+    kgml = _get(pathway, form='kgml').text
 
     # Wrap text in a file handle for KGML parser
     f = io.StringIO(kgml)
