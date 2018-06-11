@@ -90,7 +90,7 @@ def mutation_sample_map(snv: pd.DataFrame, gene: str, mutations: List[str]) -> p
 def pathway_from_gene(driver_pathway_path: str, gene: str) -> str:
     """Returns TCGA cancer driver pathway for a given gene"""
     path = pd.read_csv(driver_pathway_path, sep='\t')
-    pathway = path[path.gene == gene].Pathway.unique()
+    pathway = path[path.Gene == gene].Pathway.unique()
     if len(pathway) != 1:
         print(f'More than 1 pathway found: {pathway}')
         return pathway
