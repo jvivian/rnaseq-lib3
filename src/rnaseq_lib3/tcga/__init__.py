@@ -70,7 +70,7 @@ def subtype_filter(metadata: pd.DataFrame, samples: List[str], subtypes: List[st
     return set(samples).intersection(set(sub.id))
 
 
-def samples_for_mutation_list(snv: pd.DataFrame, gene: str, mutations: List[str]) -> defaultdict[str, Set[str]]:
+def mutation_sample_map(snv: pd.DataFrame, gene: str, mutations: List[str]) -> defaultdict[str, Set[str]]:
     """Identify samples with a given set of mutations in a particular gene"""
     # Subset by variant type and mutation
     sub = snv[(snv.SYMBOL == gene) & (snv.Variant_Type == 'SNP')]
