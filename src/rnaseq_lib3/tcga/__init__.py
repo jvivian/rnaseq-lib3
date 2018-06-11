@@ -1,3 +1,4 @@
+from collections import defaultdict
 from typing import List, Set
 
 import pandas as pd
@@ -69,16 +70,16 @@ def subtype_filter(metadata: pd.DataFrame, samples: List[str], subtypes: List[st
     return set(samples).intersection(set(sub.id))
 
 
-def samples_for_mutation_list(snv: pd.DataFrame, gene: str, mutations: List[str]) -> Set[str]:
+def samples_for_mutation_list(snv: pd.DataFrame, gene: str, mutations: List[str]) -> defaultdict[str, Set[str]]:
     """Identify samples with a given set of mutations in a particular gene"""
     # Subset by variant type and mutation
     sub = snv[(snv.SYMBOL == gene) & (snv.Variant_Type == 'SNP')]
 
     # Collect samples for all mutants
-    samples = set()
+    s = defaultdict(set)
     for mut in mutations:
-        samples.update([x[:15] for x in sub[sub.HGVSp_Short == mut].Tumor_Sample_Barcode])
-    return samples
+        s[mut].update([x[:15] for x in sub[sub.HGVSp_Short == mut].Tumor_Sample_Barcode])
+    return s
 
 
 def pathway_from_gene(driver_pathway_path: str, gene: str) -> str:
