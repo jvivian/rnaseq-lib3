@@ -1,11 +1,8 @@
-def get_protein_coding_genes(gtf):
-    """
-    Collect protein-coding genes from GTF file
+from typing import List
 
-    :param str gtf: Path to GTF file to parse
-    :return: Protein coding genes
-    :rtype: list(str)
-    """
+
+def get_protein_coding_genes(gtf: str) -> List[str]:
+    """Collect protein-coding genes from GTF file"""
     genes = []
     with open(gtf, 'r') as f:
         for line in f:
