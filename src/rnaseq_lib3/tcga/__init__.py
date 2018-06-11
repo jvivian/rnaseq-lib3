@@ -81,7 +81,10 @@ def mutation_sample_map(snv: pd.DataFrame, gene: str, mutations: List[str]) -> p
         s[mut].update([x[:15] for x in sub[sub.HGVSp_Short == mut].Tumor_Sample_Barcode])
 
     # Convert to DataFrame
-    return pd.DataFrame(list({x: k for k, v in s.items() for x in v}.items()), columns=['Sample', 'Mutation'])
+    df = pd.DataFrame(list({x: k for k, v in s.items() for x in v}.items()), columns=['Sample', 'Mutation'])
+    df.set_index('Sample')
+    df.index.name = None
+    return df
 
 
 def pathway_from_gene(driver_pathway_path: str, gene: str) -> str:
