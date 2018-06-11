@@ -1,3 +1,5 @@
+from typing import List, Set
+
 import pandas as pd
 
 # TCGA Mapping
@@ -42,4 +44,38 @@ subtype_abbrev = {
     'UVM': 'Uveal Melanoma',
 }
 
+
 # TCGA SNV Functions
+def mutations_for_gene(driver_mutations_path: str, gene: str) -> List[str]:
+    """Returns set of mutations for a TCGA cancer driver gene"""
+    mut = pd.read_csv(driver_mutations_path, sep='\t')
+    mut_set = mut[mut.Gene == gene].Mutation.unique()
+    return sorted(mut_set)
+
+
+def subtypes_for_gene(driver_consensus_path: str, gene: str) -> List[str]:
+    """Returns TCGA cancer subtypes for a given gene"""
+    con = pd.read_csv(driver_consensus_path, sep='\t')
+    cancer_set = con[con.Gene == gene].Cancer.unique()
+    submap = subtype_abbrev
+    cancer_mapping = [submap[x] if x in submap else x for x in cancer_set]
+    cancer_mapping = ['_'.join(y.capitalize() for y in x.split()) for x in cancer_mapping]
+    return cancer_mapping
+
+
+def subtype_filter(metadata: pd.DataFrame, samples: List[str], subtypes: List[str]) -> Set[str]:
+    """Filter samples by set of valid subtypes"""
+    sub = metadata[metadata.type.isin(subtypes)]
+    return set(samples).intersection(set(sub.id))
+
+
+def sample_for_mutation_list(snv: pd.DataFrame, gene: str, mutations: List[str]) -> Set[str]:
+    """"""
+    # Subset by variant type and mutation
+    sub = snv[(snv.SYMBOL == gene) & (snv.Variant_Type == 'SNP')]
+
+    # Collect samples for all mutants
+    samples = set()
+    for mut in mutations:
+        samples.update([x[:15] for x in sub[sub.HGVSp_Short == mut].Tumor_Sample_Barcode])
+    return samples
