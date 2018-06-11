@@ -6,4 +6,4 @@ dependencies:
 - pip:
   - synapseclient
   - annoy
-
+  - jupyter_contrib_nbextensions
