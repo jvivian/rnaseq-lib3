@@ -1,10 +1,12 @@
 name: rnaseq-lib3
+channels:
+- conda-forge
 dependencies:
 - python=3
 - anaconda
 - biopython
+- jupyter_contrib_nbextensions
 - pip:
   - synapseclient
   - annoy
-  - jupyter_contrib_nbextensions
   - holoviews
