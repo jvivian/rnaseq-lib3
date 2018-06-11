@@ -7,3 +7,4 @@ dependencies:
   - synapseclient
   - annoy
   - jupyter_contrib_nbextensions
+  - holoviews
