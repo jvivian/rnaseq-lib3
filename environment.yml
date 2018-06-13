@@ -10,3 +10,5 @@ dependencies:
   - synapseclient
   - annoy
   - holoviews
+  - trimap
+  
