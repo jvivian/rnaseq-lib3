@@ -45,7 +45,6 @@ subtype_abbrev = {
     'UVM': 'Uveal Melanoma',
 }
 
-
 # TCGA SNV Functions
 def mutations_for_gene(driver_mutations_path: str, gene: str) -> List[str]:
     """Returns set of mutations for a TCGA cancer driver gene"""
