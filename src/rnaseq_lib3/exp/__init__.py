@@ -45,7 +45,7 @@ def _label_vector_from_samples(samples: List[str]) -> List[str]:
     return vector
 
 
-def sample_counts_df(df: DataFrame, groupby='tissue') -> DataFrame:
+def sample_counts_df(df: DataFrame, groupby: str = 'tissue') -> DataFrame:
     """Return a dataframe of sample counts based on groupby of 'tissue' or 'type'"""
     # Cast value_counts as dataframe
     vc = pd.DataFrame(df.groupby(groupby).label.value_counts())
