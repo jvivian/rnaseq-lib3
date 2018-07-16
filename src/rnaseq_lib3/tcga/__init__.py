@@ -49,12 +49,12 @@ subtype_abbrev = {
 # General Information
 def patient_tissue(met: pd.DataFrame, patient_id: str) -> str:
     """Return a patient's disease tissue of origin"""
-    return met.loc[patient_id].tissue
+    return met.drop_duplicates('id').loc[patient_id].tissue
 
 
 def patient_subtype(met: pd.DataFrame, patient_id: str) -> str:
     """Return a patient's disease subtype"""
-    return met.loc[patient_id].type
+    return met.drop_duplicates('id').loc[patient_id].type
 
 
 # TCGA SNV/Driver Functions
