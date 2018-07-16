@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Tuple
 
 import pandas as pd
 from pandas import DataFrame
@@ -9,7 +9,7 @@ from pandas import DataFrame
 # Metadata: pd.read_hdf(data_path, key='met')
 def add_metadata_to_exp(exp: DataFrame, met: DataFrame) -> DataFrame:
     """Adds metadata to the expression dataframe and returns a combined object"""
-    # Copy genes from expression dataframe
+    # Copy genes from expression DataFrame
     genes = exp.columns.tolist()
 
     # Remove duplicates from metadata
@@ -47,9 +47,17 @@ def _label_vector_from_samples(samples: List[str]) -> List[str]:
 
 def sample_counts_df(df: DataFrame, groupby: str = 'tissue') -> DataFrame:
     """Return a dataframe of sample counts based on groupby of 'tissue' or 'type'"""
-    # Cast value_counts as dataframe
+    # Cast value_counts as DataFrame
     vc = pd.DataFrame(df.groupby(groupby).label.value_counts())
     # Relabel column and reset_index to cast multi-index as columns
     vc.columns = ['counts']
     vc.reset_index(inplace=True)
     return vc.sort_values([groupby, 'label'])
+
+
+def subset_by_dataset(df: DataFrame) -> Tuple[DataFrame, DataFrame, DataFrame]:
+    """Subset expression/metadata table by Label"""
+    tumor = df[df.label == 'tcga-tumor']
+    normal = df[df.label == 'tcga-normal']
+    gtex = df[df.label == 'gtex']
+    return tumor, normal, gtex
