@@ -46,6 +46,17 @@ subtype_abbrev = {
 }
 
 
+# General Information
+def patient_tissue(met: pd.DataFrame, patient_id: str) -> str:
+    """Return a patient's disease tissue of origin"""
+    return met.loc[patient_id].tissue
+
+
+def patient_subtype(met: pd.DataFrame, patient_id: str) -> str:
+    """Return a patient's disease subtype"""
+    return met.loc[patient_id].type
+
+
 # TCGA SNV/Driver Functions
 def mutations_for_gene(driver_mutations_path: str, gene: str) -> List[str]:
     """Returns set of mutations for a TCGA cancer driver gene"""
