@@ -45,7 +45,8 @@ subtype_abbrev = {
     'UVM': 'Uveal Melanoma',
 }
 
-# TCGA SNV Functions
+
+# TCGA SNV/Driver Functions
 def mutations_for_gene(driver_mutations_path: str, gene: str) -> List[str]:
     """Returns set of mutations for a TCGA cancer driver gene"""
     mut = pd.read_csv(driver_mutations_path, sep='\t')
@@ -69,6 +70,18 @@ def subtype_filter(metadata: pd.DataFrame, samples: List[str], subtypes: List[st
     return set(samples).intersection(set(sub.id))
 
 
+def pathway_from_gene(driver_pathway_path: str, gene: str) -> str:
+    """Returns TCGA cancer driver pathway for a given gene"""
+    path = pd.read_csv(driver_pathway_path, sep='\t')
+    pathway = path[path.Gene == gene].Pathway.unique()
+    if len(pathway) != 1:
+        print(f'More than 1 pathway found: {pathway}')
+        return pathway
+    else:
+        return pathway[0]
+
+
+# TCGA MC3 Mutation Table
 def mutation_sample_map(snv: pd.DataFrame, gene: str, mutations: List[str]) -> pd.DataFrame:
     """Identify samples with a given set of mutations in a particular gene"""
     # Subset by variant type and mutation
@@ -84,14 +97,3 @@ def mutation_sample_map(snv: pd.DataFrame, gene: str, mutations: List[str]) -> p
     df = df.set_index('Sample')
     df.index.name = None
     return df
-
-
-def pathway_from_gene(driver_pathway_path: str, gene: str) -> str:
-    """Returns TCGA cancer driver pathway for a given gene"""
-    path = pd.read_csv(driver_pathway_path, sep='\t')
-    pathway = path[path.Gene == gene].Pathway.unique()
-    if len(pathway) != 1:
-        print(f'More than 1 pathway found: {pathway}')
-        return pathway
-    else:
-        return pathway[0]
