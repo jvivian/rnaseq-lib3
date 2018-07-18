@@ -69,21 +69,26 @@ def patients_from_tissue(df: pd.DataFrame, tissue: str) -> List[str]:
 
 
 # Differential Expression
-def find_de_genes(df1: pd.DataFrame, df2: pd.DataFrame, genes: List[str]) -> pd.DataFrame:
+def find_de_genes(df1: pd.DataFrame, df2: pd.DataFrame, genes: List[str], normalization=False) -> pd.DataFrame:
     """Return DataFrame of differentially expressed genes between two groups"""
 
     # Compute L2FC values for every gene between both DataFrames
     l2fcs = []
     for gene in genes:
-        med1 = df1[gene].median()
-        med2 = df2[gene].median()
+        if normalization:
+            med1 = df1[gene].apply(normalization).median()
+            med2 = df2[gene].apply(normalization).median()
+        else:
+            med1 = df1[gene].median()
+            med2 = df2[gene].median()
         l2fcs.append(log2fc(med1, med2))
 
     # Construct output DataFrame, sorting by L2FC
     df = pd.DataFrame()
     df['genes'] = genes
     df['L2FC'] = l2fcs
-    return df.sort_values('L2FC', ascending=False, inplace=True)
+    df = df.sort_values('L2FC', ascending=False)
+    return df
 
 
 # TCGA SNV/Driver Functions
