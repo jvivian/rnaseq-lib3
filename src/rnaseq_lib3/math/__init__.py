@@ -7,7 +7,7 @@ from pandas import DataFrame
 # Differential Expression
 def log2fc(a: Union[float, np.array], b: Union[float, np.array], pad: float = 0.001) -> Union[float, np.array]:
     """
-    Calculate the log2 Fold Change between two arrays, floats, or integers
+    Calculate the log2 fold change between two arrays or floats.
     a and b cannot be, nor contain, values less than 0
     """
     return np.log2(a + pad) - np.log2(b + pad)

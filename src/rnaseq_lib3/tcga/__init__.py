@@ -2,6 +2,7 @@ from collections import defaultdict
 from typing import List, Set
 
 import pandas as pd
+from rnaseq_lib3.math import log2fc
 
 # TCGA Mapping
 subtype_abbrev = {
@@ -55,6 +56,34 @@ def patient_tissue(met: pd.DataFrame, patient_id: str) -> str:
 def patient_subtype(met: pd.DataFrame, patient_id: str) -> str:
     """Return a patient's disease subtype"""
     return met.drop_duplicates('id').loc[patient_id].type
+
+
+def patients_from_subtype(df: pd.DataFrame, subtype: str) -> List[str]:
+    """Given a subtype, return all patients within that subtype"""
+    return df[df.type == subtype].id.tolist()
+
+
+def patients_from_tissue(df: pd.DataFrame, tissue: str) -> List[str]:
+    """Given a tissue, return all patients within that tissue"""
+    return df[df.tissue == tissue].id.tolist()
+
+
+# Differential Expression
+def find_de_genes(df1: pd.DataFrame, df2: pd.DataFrame, genes: List[str]) -> pd.DataFrame:
+    """Return DataFrame of differentially expressed genes between two groups"""
+
+    # Compute L2FC values for every gene between both DataFrames
+    l2fcs = []
+    for gene in genes:
+        med1 = df1[gene].median()
+        med2 = df2[gene].median()
+        l2fcs.append(log2fc(med1, med2))
+
+    # Construct output DataFrame, sorting by L2FC
+    df = pd.DataFrame()
+    df['genes'] = genes
+    df['L2FC'] = l2fcs
+    return df.sort_values('L2FC', ascending=False, inplace=True)
 
 
 # TCGA SNV/Driver Functions
