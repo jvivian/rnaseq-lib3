@@ -24,6 +24,15 @@ def iqr_bounds(ys: List[Union[float, int]]) -> Tuple[float, float]:
     return upper_bound, lower_bound
 
 
+def std_bounds(ys: List[Union[float, int]], num_std: int = 2) -> Tuple[float, float]:
+    """Return upper and lower bounds for an array of values"""
+    u = np.mean(ys)
+    std = np.std(ys)
+    upper = u + num_std * std
+    lower = u - num_std * std
+    return upper, lower
+
+
 # Differential Expression
 def log2fc(a: Union[float, np.array], b: Union[float, np.array], pad: float = 0.001) -> Union[float, np.array]:
     """
