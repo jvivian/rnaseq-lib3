@@ -1,5 +1,7 @@
+import math
 from typing import List, Tuple
 
+import numpy as np
 import pandas as pd
 from pandas import DataFrame
 
@@ -61,3 +63,41 @@ def subset_by_dataset(df: DataFrame) -> Tuple[DataFrame, DataFrame, DataFrame]:
     normal = df[df.label == 'tcga-normal']
     gtex = df[df.label == 'gtex']
     return tumor, normal, gtex
+
+
+def low_variance_filtering(df: DataFrame, unexpressed: float = 0.8,
+                           thresh: int = 0, filter_perc: float = 0.2) -> DataFrame:
+    """
+    Filter genes not expressed in 80% of samples and then 20% of the lowest varying remaining genes
+    Source: https://github.com/UCSC-Treehouse/protocol/blob/master/3_generate-thresholds.ipynb
+
+    Args:
+        df: DataFrame of expression values
+        unexpressed: Unexpressed ratio required to remove gene
+        thresh: Threshold which constitutes zero. May need to adjust to 0.0001443 if genes not removed
+        filter_perc: Percentage of low-variance genes to remove
+
+    Returns:
+        Filtered DataFrame
+    """
+    max_allowed_zeroes = len(df.columns) * unexpressed
+
+    # Is the count of items less than threshold within the acceptable count?
+    def sufficiently_expressed(series, max_zeroes, threshold):
+        return len(series[series <= threshold]) < max_zeroes
+
+    # Gene & whether it is Keep (True) or too many zeroes (False)
+    with_zeroes = df.apply(sufficiently_expressed, args=(max_allowed_zeroes, thresh), axis=1)
+
+    # Next, do variance filtering
+    expression_filtered_compendium = df[with_zeroes]
+    print(str(len(expression_filtered_compendium)) + ' genes remain after expression filter.')
+
+    # Get the standard deviation
+    variance = expression_filtered_compendium.apply(np.std, axis=1)
+    cut_proportion = int(math.ceil(len(variance) * filter_perc))
+    keep_proportion = len(variance) - cut_proportion
+    expression_and_variance_filtered = variance.nlargest(keep_proportion)
+    print(str(len(expression_and_variance_filtered)) + ' genes remain after variance filter.')
+
+    return expression_and_variance_filtered
