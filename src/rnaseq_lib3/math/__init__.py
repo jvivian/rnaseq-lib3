@@ -2,10 +2,11 @@ from typing import Union, List, Tuple
 
 import numpy as np
 from pandas import DataFrame
+from statsmodels.stats.stattools import medcouple
 
 
 # Outlier
-def iqr_bounds(ys: List[Union[float, int]]) -> Tuple[float, float]:
+def iqr_bounds(ys: List[Union[float, int]], whis=1.5) -> Tuple[float, float]:
     """
     Return upper and lower bound for an array of values
     Lower bound: Q1 - (IQR * 1.5)
@@ -19,8 +20,8 @@ def iqr_bounds(ys: List[Union[float, int]]) -> Tuple[float, float]:
     """
     quartile_1, quartile_3 = np.percentile(ys, [25, 75])
     iqr = quartile_3 - quartile_1
-    lower_bound = quartile_1 - (iqr * 1.5)
-    upper_bound = quartile_3 + (iqr * 1.5)
+    lower_bound = quartile_1 - (iqr * whis)
+    upper_bound = quartile_3 + (iqr * whis)
     return upper_bound, lower_bound
 
 
@@ -31,6 +32,15 @@ def std_bounds(ys: List[Union[float, int]], num_std: int = 2) -> Tuple[float, fl
     upper = u + num_std * std
     lower = u - num_std * std
     return upper, lower
+
+
+def adjusted_whisker_skew(ys: List[Union[float, int]]) -> float:
+    """Calculate IQR whisker modifier based on skew (medcouple)"""
+    mc = float(medcouple(ys))
+    if mc >= 0:
+        return 1.5 * np.exp(3 * mc)
+    else:
+        return 1.5 * np.exp(4 * mc)
 
 
 # Differential Expression
