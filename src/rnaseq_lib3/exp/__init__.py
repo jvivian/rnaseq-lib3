@@ -6,7 +6,7 @@ import pandas as pd
 from pandas import DataFrame
 
 
-# These functions are for data stored in this Synapse ID:
+# These functions are for data stored in this Synapse ID: syn12120302
 # Expression: pd.read_hdf(data_path, key='exp')
 # Metadata: pd.read_hdf(data_path, key='met')
 def add_metadata_to_exp(exp: DataFrame, met: DataFrame) -> DataFrame:
