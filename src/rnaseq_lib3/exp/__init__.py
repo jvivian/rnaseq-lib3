@@ -11,9 +11,6 @@ from pandas import DataFrame
 # Metadata: pd.read_hdf(data_path, key='met')
 def add_metadata_to_exp(exp: DataFrame, met: DataFrame) -> DataFrame:
     """Adds metadata to the expression dataframe and returns a combined object"""
-    # Copy genes from expression DataFrame
-    genes = exp.columns.tolist()
-
     # Remove duplicates from metadata
     samples = [x for x in exp.index if x in met.id]
     met = met[met.id.isin(samples)].drop_duplicates('id')
@@ -78,8 +75,13 @@ def low_variance_filtering(df: DataFrame, unexpressed: float = 0.8,
         filter_perc: Percentage of low-variance genes to remove
 
     Returns:
-        Filtered DataFrame
+        DataFrame of filtered genes
     """
+    # TODO: Eventually fix code to assume samples by gene matrix
+    # Transpose matrix because source code assumes genes by samples
+    df = df.T
+
+    # Calculate maximum allowed zeroes
     max_allowed_zeroes = len(df.columns) * unexpressed
 
     # Is the count of items less than threshold within the acceptable count?
@@ -100,4 +102,4 @@ def low_variance_filtering(df: DataFrame, unexpressed: float = 0.8,
     expression_and_variance_filtered = variance.nlargest(keep_proportion)
     print(str(len(expression_and_variance_filtered)) + ' genes remain after variance filter.')
 
-    return expression_and_variance_filtered
+    return df.T[expression_and_variance_filtered.index.values]
