@@ -106,10 +106,20 @@ def low_variance_filtering(df: DataFrame, unexpressed: float = 0.8,
 
 
 def gene_id_to_name(genes: List[str], attrs_path: str) -> List[str]:
+    """
+    Map Ensembl gene IDs to gene names
+    Args:
+        genes: List of ENSEMBL gene names
+        attrs_path: Path to file used for mapping. Synapse ID: syn15674057
+
+    Returns:
+        List of mapped genes
+    """
     # Create Series for mapping
     attrs = pd.read_csv(attrs_path, sep='\t', index_col=0)
     attrs = attrs['geneName'].drop_duplicates()
 
+    # Map genes
     mapped_genes = []
     for gene in genes:
         try:
