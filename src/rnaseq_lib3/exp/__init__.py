@@ -103,3 +103,17 @@ def low_variance_filtering(df: DataFrame, unexpressed: float = 0.8,
     print(str(len(expression_and_variance_filtered)) + ' genes remain after variance filter.')
 
     return df.T[expression_and_variance_filtered.index.values]
+
+
+def gene_id_to_name(genes: List[str], attrs_path: str) -> List[str]:
+    # Create Series for mapping
+    attrs = pd.read_csv(attrs_path, sep='\t', index_col=0)
+    attrs = attrs['geneName'].drop_duplicates()
+
+    mapped_genes = []
+    for gene in genes:
+        try:
+            mapped_genes.append(attrs.loc[gene])
+        except KeyError:
+            mapped_genes.append(gene)
+    return mapped_genes
