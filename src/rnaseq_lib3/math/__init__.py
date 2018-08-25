@@ -36,6 +36,11 @@ def std_bounds(ys: List[Union[float, int]], num_std: int = 2) -> Tuple[float, fl
 
 def adjusted_whisker_skew(ys: List[Union[float, int]]) -> float:
     """Calculate IQR whisker modifier based on skew (medcouple)"""
+    # Cannot compute medcouple for arrays of 1 or fewer
+    if len(ys) <= 1:
+        return 1.5
+
+    # Calculate medcouple and adjusted whisker based on skew
     mc = float(medcouple(ys))
     if mc >= 0:
         return 1.5 * np.exp(3 * mc)
