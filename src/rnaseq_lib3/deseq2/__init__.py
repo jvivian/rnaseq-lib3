@@ -122,11 +122,12 @@ def run(df_path: str, group_a: List[str], group_b: List[str], output_dir: str, c
                   '/data/{}'.format(os.path.join('work_dir', 'disease.vector'))]
 
     print('\nCalling: {}\n'.format(' '.join(docker_parameters + parameters)))
-    p = Popen(docker_parameters + parameters, stderr=PIPE, stdout=PIPE)
+    p = Popen(docker_parameters + parameters, stderr=PIPE, stdout=PIPE, universal_newlines=True)
     out, err = p.communicate()
     if out or err:
-        print(out)
-        print(err)
+        logfile = os.path.join(output_dir, 'log.txt')
+        with open(logfile, 'w') as f:
+            f.write(f'Number of samples\tA: {len(group_a)}\tB: {len(group_b)}\n\n{out}\n\n{err}')
 
     # Fix output of files
     fix_permissions(tool='jvivian/deseq2', work_dir=output_dir)
