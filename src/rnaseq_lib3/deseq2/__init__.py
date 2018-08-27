@@ -141,5 +141,6 @@ def run(df_path: str, group_a: List[str], group_b: List[str], output_dir: str, c
     # Fix output of files
     fix_permissions(tool='jvivian/deseq2', work_dir=output_dir)
 
-    # Clean up
-    shutil.rmtree(work_dir)
+    # Clean up if nothing went wrong
+    if p.returncode == 0:
+        shutil.rmtree(work_dir)
