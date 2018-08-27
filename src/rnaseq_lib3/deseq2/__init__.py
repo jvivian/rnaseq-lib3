@@ -22,6 +22,10 @@ def run(df_path: str, group_a: List[str], group_b: List[str], output_dir: str, c
     Returns:
         None
     """
+    # Check for output to avoid overwriting
+    if os.path.exists(os.path.join(output_dir, 'results.tsv')):
+        print(f'Output already exists in {output_dir}')
+        return None
 
     # Make workspace directories
     work_dir = os.path.join(output_dir, 'work_dir')
