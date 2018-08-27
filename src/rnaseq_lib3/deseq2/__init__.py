@@ -31,6 +31,11 @@ def run(df_path: str, group_a: List[str], group_b: List[str], output_dir: str, c
     work_dir = os.path.join(output_dir, 'work_dir')
     os.makedirs(work_dir, exist_ok=True)
 
+    # Fix groups based on samples in expected count DataFrame to avoid setcolorder error
+    exp_samples = set(open(df_path, 'r').readline().split('\t')[1:])
+    group_a = [x for x in group_a if x in exp_samples]
+    group_b = [x for x in group_b if x in exp_samples]
+
     # Write out vectors
     tissue_vector = os.path.join(work_dir, 'tissue.vector')
     with open(tissue_vector, 'w') as f:
