@@ -76,3 +76,32 @@ def mean_normalize(df: DataFrame) -> DataFrame:
 def softmax(df: DataFrame) -> DataFrame:
     """Normalizes columns to sum to 1"""
     return df.divide(df.sum())
+
+
+# GMM Fits
+def find_gaussian_intersection(m1, m2, std1, std2):
+    """
+    Given parameters for two gaussian distributions, identify the intersection(s)
+    :param float m1: Mean for first Gaussian
+    :param float m2: Mean for second Gaussian
+    :param float std1: Standard deviation for first Gaussian
+    :param float std2: Standard deviation for second Gaussian
+    :return: Intersection(s) between Gaussian distributions
+    :rtype: list(float,)
+    """
+    # Define systems of equations
+    m1, m2, std1, std2 = float(m1), float(m2), float(std1), float(std2)
+    a = 1.0 / (2 * std1 ** 2) - 1.0 / (2 * std2 ** 2)
+    b = m2 / (std2 ** 2) - m1 / (std1 ** 2)
+    c = m1 ** 2 / (2 * std1 ** 2) - m2 ** 2 / (2 * std2 ** 2) - np.log(std2 / std1)
+
+    # Return intersection between means
+    mean_min, mean_max = sorted([m1, m2])
+
+    # Only return the intersection if one exists between the means
+    roots = [round(x, 2) for x in np.roots([a, b, c])]
+    inter = [x for x in np.roots([a, b, c]) if mean_min < x < mean_max]
+    if len(inter) == 0:
+        return roots
+    else:
+        return inter
