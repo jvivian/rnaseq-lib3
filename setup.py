@@ -9,4 +9,5 @@ setup(name='rnaseq-lib3',
       license='MIT',
       package_dir={'': 'src'},
       packages=find_packages('src'), install_requires=['requests', 'scikit-learn', 'numba', 'annoy', 'numpy',
-                                                       'synapseclient', 'pandas', 'holoviews'])
+                                                       'synapseclient', 'pandas', 'holoviews', 'scipy',
+                                                       'seaborn', 'matplotlib'])
