@@ -5,6 +5,8 @@ import rnaseq_lib3.exp
 import rnaseq_lib3.gtf
 import rnaseq_lib3.kegg
 import rnaseq_lib3.math
+import rnaseq_lib3.math.dist
+import rnaseq_lib3.math.plot
 import rnaseq_lib3.plot
 import rnaseq_lib3.synapse
 import rnaseq_lib3.tcga
