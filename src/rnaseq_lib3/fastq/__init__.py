@@ -17,8 +17,8 @@ def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None
     lp = open("{}.paired.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'w')
     rp = open("{}.paired.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'w')
     if output_singles:
-        lu = open("{}.singles.fastq".format(args.l.replace('.fastq', '').replace('.gz', '')), 'w')
-        ru = open("{}.singles.fastq".format(args.r.replace('.fastq', '').replace('.gz', '')), 'w')
+        lu = open("{}.singles.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'w')
+        ru = open("{}.singles.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'w')
 
     # read the first file into a data structure
     seen = set()
@@ -41,7 +41,7 @@ def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None
     rp.close()
 
 
-def stream_fastq(fqfile: str) -> Tuple(str, str, str, str):
+def stream_fastq(fqfile: str) -> Tuple[str, str, str, str]:
     """Read a fastq file and provide an iterable of the sequence ID, the
     full header, the sequence, and the quaity scores.
 
