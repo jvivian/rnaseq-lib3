@@ -10,7 +10,7 @@ import scipy.stats as st
 def train_outlier_model(sample: pd.Series,
                         background_df: pd.DataFrame,
                         class_col: str,
-                        genes: List[str],
+                        genes: List[str] = None,
                         n_samples: int = 200,
                         n_chains: int = None,
                         tune: int = 1000,
@@ -39,7 +39,7 @@ def train_outlier_model(sample: pd.Series,
     print(f'Running {n_chains} on as many cores (if >= 4)')
     print(f'Number of parameters in model: {num_params(len(genes), len(classes))}')
 
-    # Pick genes if not passed in
+    # Pick genes to train on if not passed in
     if genes is None:
         print(f'Genes not selected, picking {n_genes} via SelectKBest')
         k = SelectKBest(k=n_genes)
