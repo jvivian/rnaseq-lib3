@@ -1,16 +1,17 @@
 from multiprocessing import cpu_count
 from typing import List, Dict, Tuple
 
-from sklearn.feature_selection import SelectKBest
 import pandas as pd
 import pymc3 as pm
 import scipy.stats as st
+from sklearn.feature_selection import SelectKBest
 
 
 def train_outlier_model(sample: pd.Series,
                         background_df: pd.DataFrame,
                         class_col: str,
-                        genes: List[str] = None,
+                        gene_pool: List[str] = None,
+                        training_genes: List[str] = None,
                         n_samples: int = 200,
                         n_chains: int = None,
                         tune: int = 1000,
@@ -21,7 +22,8 @@ def train_outlier_model(sample: pd.Series,
 
     Args:
         sample: N-of-1 expression vector
-        genes: Gene pool to selectKBest from
+        gene_pool: Gene pool to selectKBest from
+        training_genes: If provided, used instead of selecting KBest
         background_df: Background dataset of expression where index = Samples
         class_col: Column to use as class discriminator
         n_samples: Number of samples to train
@@ -33,21 +35,24 @@ def train_outlier_model(sample: pd.Series,
     Returns:
         (Model, Trace) from PyMC3
     """
+    assert any([gene_pool, training_genes]), 'Either gene_pool or training_genes needs to be provided'
+
     # There is both a n_chains and njobs command, but this simplifies things a bit since almost always chains >= 4
     n_chains = cpu_count() if n_chains is None else n_chains
     classes = sorted(background_df[class_col].unique())
+    n_genes = n_genes if training_genes is None else len(training_genes)
     print(f'Running {n_chains} on as many cores (if >= 4)')
-    print(f'Number of parameters in model: {num_params(len(genes), len(classes))}')
+    print(f'Number of parameters in model: {num_params(n_genes, len(classes))}')
 
     # Pick genes to train on if not passed in
-    if genes is None:
+    if not training_genes:
         print(f'Genes not selected, picking {n_genes} via SelectKBest')
         k = SelectKBest(k=n_genes)
-        k.fit_transform(background_df[genes], background_df[class_col])
-        kbest = [genes[i] for i in k.get_support(indices=True)]
+        k.fit_transform(background_df[gene_pool], background_df[class_col])
+        training_genes = [gene_pool[i] for i in k.get_support(indices=True)]
 
     # Fits
-    fits = fit_genes_gaussian(df=background_df, class_col=class_col, genes=kbest)
+    fits = fit_genes_gaussian(df=background_df, class_col=class_col, genes=training_genes)
 
     # Define and run model
     with pm.Model() as model:
@@ -60,7 +65,7 @@ def train_outlier_model(sample: pd.Series,
 
         # Define linear model for each gene
         mu = {}
-        for i, gene in enumerate(kbest):
+        for i, gene in enumerate(training_genes):
             mu[gene] = alpha
             for j, name in enumerate(classes):
                 mu[gene] += exp_rvs[f'{gene}-{name}'] * beta[j]
@@ -70,7 +75,7 @@ def train_outlier_model(sample: pd.Series,
 
         # Define z distributions for each mu
         z = {}
-        for i, gene in enumerate(genes):
+        for i, gene in enumerate(gene_pool):
             obs = sample[gene]
             z[gene] = pm.Laplace(gene, mu=mu[gene], b=sigma, observed=obs)
 
