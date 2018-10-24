@@ -1,16 +1,19 @@
 import gzip
+import os
+from subprocess import Popen, PIPE
 from typing import Tuple
 
 from tqdm import tqdm
 
 
 # Adopted from: https://github.com/linsalrob/EdwardsLab/blob/master/bin/pair_fastq_fast.py
+from rnaseq_lib3.docker import get_base_call
 
 
 def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None:
     # read the first file into a data structure
     seqs = {}
-    for seqid, header, seq, qual in tqdm(stream_fastq(r1_path)):
+    for seqid, header, seq, qual in tqdm(_stream_fastq(r1_path)):
         seqid = seqid.replace('.1', '')
         seqs[seqid] = [header, seq, qual]
 
@@ -22,7 +25,7 @@ def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None
 
     # read the first file into a data structure
     seen = set()
-    for seqid, header, seq, qual in tqdm(stream_fastq(r2_path), total=len(seqs)):
+    for seqid, header, seq, qual in tqdm(_stream_fastq(r2_path), total=len(seqs)):
         seqid = seqid.replace('.2', '')
         seen.add(seqid)
         if seqid in seqs:
@@ -41,7 +44,7 @@ def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None
     rp.close()
 
 
-def stream_fastq(fqfile: str) -> Tuple[str, str, str, str]:
+def _stream_fastq(fqfile: str) -> Tuple[str, str, str, str]:
     """Read a fastq file and provide an iterable of the sequence ID, the
     full header, the sequence, and the quaity scores.
 
@@ -58,13 +61,13 @@ def stream_fastq(fqfile: str) -> Tuple[str, str, str, str]:
         header = qin.readline()
         if not header:
             break
-        header = header.strip()
+        header = header.decode('utf-8').strip()
         seqidparts = header.split(' ')
         seqid = seqidparts[0]
         seq = qin.readline()
-        seq = seq.strip()
+        seq = seq.decode('utf-8').strip()
         qin.readline()
         qualscores = qin.readline()
-        qualscores = qualscores.strip()
+        qualscores = qualscores.decode('utf-8').strip()
         header = header.replace('@', '', 1)
         yield seqid, header, seq, qualscores
