@@ -75,7 +75,7 @@ def train_outlier_model(sample: pd.Series,
 
         # Define z distributions for each mu
         z = {}
-        for i, gene in enumerate(gene_pool):
+        for i, gene in enumerate(training_genes):
             obs = sample[gene]
             z[gene] = pm.Laplace(gene, mu=mu[gene], b=sigma, observed=obs)
 
