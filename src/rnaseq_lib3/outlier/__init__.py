@@ -45,7 +45,7 @@ def train_outlier_model(sample: pd.Series,
     print(f'Number of parameters in model: {num_params(n_genes, len(classes))}')
 
     # Pick genes to train on if not passed in
-    if not training_genes:
+    if training_genes is None:
         print(f'Genes not selected, picking {n_genes} via SelectKBest')
         k = SelectKBest(k=n_genes)
         k.fit_transform(background_df[gene_pool], background_df[class_col])
