@@ -95,7 +95,7 @@ def posterior_from_linear(trace: pm.backends.base.MultiTrace,
                           gene: str,
                           background_df: pd.DataFrame,
                           class_col: str,
-                          ax: plt.axes._subplots.AxesSubplot = None):
+                          ax=None):
     """
     Draws posterior using the linear model coefficients
 
