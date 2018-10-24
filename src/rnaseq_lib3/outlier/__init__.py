@@ -1,9 +1,12 @@
 from multiprocessing import cpu_count
 from typing import List, Dict, Tuple
 
+import matplotlib.pyplot as plt
+import numpy as np
 import pandas as pd
 import pymc3 as pm
 import scipy.stats as st
+import seaborn as sns
 from sklearn.feature_selection import SelectKBest
 
 
@@ -85,6 +88,47 @@ def train_outlier_model(sample: pd.Series,
                           nuts_kwargs={'target_accept': target_accept},
                           njobs=n_chains)
     return model, trace
+
+
+def posterior_from_linear(trace: pm.backends.base.MultiTrace,
+                          sample: pd.Series,
+                          gene: str,
+                          background_df: pd.DataFrame,
+                          class_col: str,
+                          ax: plt.axes._subplots.AxesSubplot = None):
+    """
+    Draws posterior using the linear model coefficients
+
+    Args:
+        trace: Trace from PyMC3
+        sample: N-of-1 sample
+        gene: Gene of interest
+        background_df: Background dataset of expression where index = Samples
+        class_col: Column to use as class discriminator
+        ax: Optional ax input if using within subplots
+    """
+    # Get Median of priors
+    z = trace['alpha']
+
+    # 1000 samples from our datasets
+    group = sorted(background_df[class_col].unique())
+    for i, t in enumerate(group):
+        samples = np.random.choice(background_df[background_df[class_col] == t][gene], len(z))
+        z += trace['beta'][:, i] * samples
+
+    # Calculate PPP
+    z_true = sample[gene]
+    ppp = round(sum(z_true < z) / len(z), 2)
+
+    # Plot
+    if ax:
+        ax.axvline(sample[gene], color='red', label='z-true')
+        ax.set_title(f'{gene} - P: {ppp}')
+        sns.kdeplot(z, label='Linear-Equation', ax=ax)
+    else:
+        plt.axvline(sample[gene], color='red', label='z-true')
+        plt.title(f'{gene} - P: {ppp}')
+        sns.kdeplot(z, label='Linear-Equation');
 
 
 def fit_genes_gaussian(df: pd.DataFrame, class_col: str, genes: List[str]) -> Dict[str, Tuple[float, float]]:
