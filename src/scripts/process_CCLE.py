@@ -42,7 +42,7 @@ def download_pair_upload(key, down_bucket, up_bucket):
 
     # Tar paired data
     print('\tCreating Tar')
-    tarball_files(key, file_paths=[r1 + '.gz', r2 + '.gz'], output_dir=tmpdir)
+    tarball_files(key, file_paths=[r1, r2], output_dir=tmpdir)
 
     # Upload to S3
     print('\tUploading to S3')
