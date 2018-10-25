@@ -5,11 +5,10 @@ from typing import Tuple
 
 from tqdm import tqdm
 
-
-# Adopted from: https://github.com/linsalrob/EdwardsLab/blob/master/bin/pair_fastq_fast.py
 from rnaseq_lib3.docker import get_base_call
 
 
+# Adopted from: https://github.com/linsalrob/EdwardsLab/blob/master/bin/pair_fastq_fast.py
 def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None:
     # read the first file into a data structure
     seqs = {}
@@ -22,8 +21,6 @@ def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None
     if output_singles:
         lu = open("{}.singles.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'w')
         ru = open("{}.singles.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'w')
-
-
 
     # read the first file into a data structure
     seen = set()
