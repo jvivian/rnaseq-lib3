@@ -33,16 +33,16 @@ def download_pair_upload(key, down_bucket, up_bucket):
     os.remove(r2)
 
     # Gzip in parallel
-    r1 = os.path.join(tmpdir, 'R1.paired.fastq.gz')
-    r2 = os.path.join(tmpdir, 'R2.paired.fastq.gz')
-    # print('\tZipping fastqs')
-    # p1 = subprocess.Popen(['gzip', r1])
-    # p2 = subprocess.Popen(['gzip', r2])
-    # p1.wait(), p2.wait()
+    r1 = os.path.join(tmpdir, 'R1.paired.fastq')
+    r2 = os.path.join(tmpdir, 'R2.paired.fastq')
+    print('\tZipping fastqs')
+    p1 = subprocess.Popen(['gzip', r1])
+    p2 = subprocess.Popen(['gzip', r2])
+    p1.wait(), p2.wait()
 
     # Tar paired data
     print('\tCreating Tar')
-    tarball_files(key, file_paths=[r1, r2], output_dir=tmpdir)
+    tarball_files(key, file_paths=[r1 + '.gz', r2 + '.gz'], output_dir=tmpdir)
 
     # Upload to S3
     print('\tUploading to S3')

@@ -16,8 +16,8 @@ def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None
         seqid = seqid.replace('.1', '')
         seqs[seqid] = [header, seq, qual]
 
-    lp = gzip.open("{}.paired.fastq.gz".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'wt')
-    rp = gzip.open("{}.paired.fastq.gz".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'wt')
+    lp = open("{}.paired.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'wt')
+    rp = open("{}.paired.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'wt')
     if output_singles:
         lu = open("{}.singles.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'w')
         ru = open("{}.singles.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'w')
