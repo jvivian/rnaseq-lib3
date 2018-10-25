@@ -82,10 +82,20 @@ ccle_up = s3.Bucket(upload_bucket)
 processed_keys = set([obj.key for obj in ccle_up.objects.all()])
 
 # Iterate through CCLE objects
+failed = []
 for obj in ccle.objects.all():
     if obj.key not in processed_keys:
         if not obj.key.startswith('output') and obj.key.endswith('.tar.gz'):
             print(f'Processing: {obj.key}')
-            download_pair_upload(obj.key, down_bucket=ccle, up_bucket=upload_bucket)
+            try:
+                download_pair_upload(obj.key, down_bucket=ccle, up_bucket=upload_bucket)
+            except:
+                print(f'Failed to process {obj.key}')
+                failed.append(obj.key)
     else:
         print(f'Processed {obj.key} already')
+
+# Output failed samples
+if failed:
+    with open('failed_samples.txt', 'w') as f:
+        f.write('\n'.join(failed))
