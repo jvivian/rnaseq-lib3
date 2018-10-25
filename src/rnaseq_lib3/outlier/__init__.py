@@ -107,11 +107,10 @@ def posterior_from_linear(trace: pm.backends.base.MultiTrace,
         class_col: Column to use as class discriminator
         ax: Optional ax input if using within subplots
     """
-    # Get Median of priors
-    z = trace['alpha']
-
-    # 1000 samples from our datasets
     group = sorted(background_df[class_col].unique())
+
+    # Calculate posterior from linear model
+    z = trace['alpha']
     for i, t in enumerate(group):
         samples = np.random.choice(background_df[background_df[class_col] == t][gene], len(z))
         z += trace['beta'][:, i] * samples
@@ -128,7 +127,25 @@ def posterior_from_linear(trace: pm.backends.base.MultiTrace,
     else:
         plt.axvline(sample[gene], color='red', label='z-true')
         plt.title(f'{gene} - P: {ppp}')
-        sns.kdeplot(z, label='Linear-Equation');
+        sns.kdeplot(z, label='Linear-Equation')
+
+
+def posterior_pvalues(trace, sample, genes, background_df, class_col):
+    group = sorted(background_df[class_col].unique())
+
+    ppp = {}
+    # For each gene, calculate posterior estimate and calculate PPP
+    for gene in genes:
+
+        z = trace['alpha']
+        for i, t in enumerate(group):
+            samples = np.random.choice(background_df[background_df[class_col] == t][gene], len(z))
+            z += trace['beta'][:, i] * samples
+
+        z_true = sample[gene]
+        ppp[gene] = sum(z_true < z) / len(z)
+
+    return pd.DataFrame({'gene': genes, 'pval': [ppp[g] for g in genes]})
 
 
 def fit_genes_gaussian(df: pd.DataFrame, class_col: str, genes: List[str]) -> Dict[str, Tuple[float, float]]:
