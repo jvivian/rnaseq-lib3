@@ -17,27 +17,32 @@ def pair_fastq(r1_path: str, r2_path: str, output_singles: bool = False) -> None
         seqid = seqid.replace('.1', '')
         seqs[seqid] = [header, seq, qual]
 
-    lp = open("{}.paired.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'w')
-    rp = open("{}.paired.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'w')
+    lp = gzip.open("{}.paired.fastq.gz".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'wt')
+    rp = gzip.open("{}.paired.fastq.gz".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'wt')
     if output_singles:
         lu = open("{}.singles.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'w')
         ru = open("{}.singles.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'w')
+
+
 
     # read the first file into a data structure
     seen = set()
     for seqid, header, seq, qual in tqdm(_stream_fastq(r2_path), total=len(seqs)):
         seqid = seqid.replace('.2', '')
-        seen.add(seqid)
         if seqid in seqs:
-            lp.write("@" + seqs[seqid][0] + "\n" + seqs[seqid][1] + "\n+\n" + seqs[seqid][2] + "\n")
+            # Remove from seqs dict for memory
+            header_l, seq_l, qual_l = seqs.pop(seqid)
+            lp.write("@" + header_l + "\n" + seq_l + "\n+\n" + qual_l + "\n")
             rp.write("@" + header + "\n" + seq + "\n+\n" + qual + "\n")
         elif output_singles:
+            seen.add(seqid)
             ru.write("@" + header + "\n" + seq + "\n+\n" + qual + "\n")
 
     if output_singles:
         for seqid in seqs:
             if seqid not in seen:
                 lu.write("@" + seqs[seqid][0] + "\n" + seqs[seqid][1] + "\n+\n" + seqs[seqid][2] + "\n")
+                seqs.pop(seqid)
         lu.close()
         ru.close()
     lp.close()
