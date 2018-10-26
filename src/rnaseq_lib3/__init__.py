@@ -4,7 +4,6 @@ import rnaseq_lib3.docker
 import rnaseq_lib3.exp
 import rnaseq_lib3.fastq
 import rnaseq_lib3.gtf
-import rnaseq_lib3.kegg
 import rnaseq_lib3.math
 import rnaseq_lib3.math.dist
 import rnaseq_lib3.math.plot
