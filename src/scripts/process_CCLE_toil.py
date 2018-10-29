@@ -140,7 +140,7 @@ def partitions(l, partition_size):
         yield l[i:i + partition_size]
 
 
-def pair_fastq(r1_path, r2_path, output_singles):
+def pair_fastq(r1_path, r2_path, output_singles=None):
     # read the first file into a data structure
     seqs = {}
     for seqid, header, seq, qual in _stream_fastq(r1_path):
