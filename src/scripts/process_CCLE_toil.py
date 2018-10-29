@@ -1,3 +1,4 @@
+import gzip
 import os
 import subprocess
 import tarfile
@@ -6,10 +7,9 @@ import boto3
 from toil.common import Toil
 from toil.job import Job
 
-from rnaseq_lib3.fastq import pair_fastq
-
 
 def workflow(job, key, download_bucket_name, upload_bucket_name):
+    """Workflow DAG"""
     # Wrap job functions
     download = job.wrapJobFn(download_sample, key, download_bucket_name, disk='50G', cores=2, memory='10G')
     pair = job.wrapJobFn(pair_fastqs, download.rv(0), download.rv(1), cores=2, memory='70G', disk='60G')
@@ -23,13 +23,13 @@ def workflow(job, key, download_bucket_name, upload_bucket_name):
 
 
 def download_sample(job, key, download_bucket_name):
-    job.log('Downloading File: ' + key)
-
+    """Downloads sample given a key and a bucket_name, untars, and unzips fastqs"""
     # Session
     session = boto3.session.Session()
     s3 = session.resource('s3')
     download_bucket = s3.Bucket(download_bucket_name)
 
+    job.log('Downloading File: ' + key)
     tar_path = os.path.join(job.tempDir, key)
     download_bucket.download_file(key, tar_path)
 
@@ -50,8 +50,9 @@ def download_sample(job, key, download_bucket_name):
 
 
 def pair_fastqs(job, r1_id, r2_id):
+    """Pairs and gzips fastqs"""
     r1_path = job.fileStore.readGlobalFile(r1_id, os.path.join(job.tempDir, 'R1.fastq'))
-    r2_path = job.fileStore.readGlobalFile(r1_id, os.path.join(job.tempDir, 'R1.fastq'))
+    r2_path = job.fileStore.readGlobalFile(r2_id, os.path.join(job.tempDir, 'R2.fastq'))
 
     job.log('Pairing fastqs')
     pair_fastq(r1_path, r2_path)
@@ -68,8 +69,9 @@ def pair_fastqs(job, r1_id, r2_id):
 
 
 def tar_and_upload(job, r1_id, r2_id, key, upload_bucket_name):
+    """Tarballs fastqs and uploads to S3 buckets"""
     r1 = job.fileStore.readGlobalFile(r1_id, os.path.join(job.tempDir, 'R1.fastq.gz'))
-    r2 = job.fileStore.readGlobalFile(r2_id, os.path.join(job.tempDir, 'R1.fastq.gz'))
+    r2 = job.fileStore.readGlobalFile(r2_id, os.path.join(job.tempDir, 'R2.fastq.gz'))
 
     job.log('Tar files')
     tarball_files(key, file_paths=[r1 + '.gz', r2 + '.gz'], output_dir=job.tempDir)
@@ -138,6 +140,72 @@ def partitions(l, partition_size):
         yield l[i:i + partition_size]
 
 
+def pair_fastq(r1_path, r2_path, output_singles):
+    # read the first file into a data structure
+    seqs = {}
+    for seqid, header, seq, qual in _stream_fastq(r1_path):
+        seqid = seqid.replace('.1', '')
+        seqs[seqid] = [header, seq, qual]
+
+    lp = open("{}.paired.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'wt')
+    rp = open("{}.paired.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'wt')
+    if output_singles:
+        lu = open("{}.singles.fastq".format(r1_path.replace('.fastq', '').replace('.gz', '')), 'w')
+        ru = open("{}.singles.fastq".format(r2_path.replace('.fastq', '').replace('.gz', '')), 'w')
+
+    # read the first file into a data structure
+    seen = set()
+    for seqid, header, seq, qual in _stream_fastq(r2_path):
+        seqid = seqid.replace('.2', '')
+        if seqid in seqs:
+            # Remove from seqs dict for memory
+            header_l, seq_l, qual_l = seqs.pop(seqid)
+            lp.write("@" + header_l + "\n" + seq_l + "\n+\n" + qual_l + "\n")
+            rp.write("@" + header + "\n" + seq + "\n+\n" + qual + "\n")
+        elif output_singles:
+            seen.add(seqid)
+            ru.write("@" + header + "\n" + seq + "\n+\n" + qual + "\n")
+
+    if output_singles:
+        for seqid in seqs:
+            if seqid not in seen:
+                lu.write("@" + seqs[seqid][0] + "\n" + seqs[seqid][1] + "\n+\n" + seqs[seqid][2] + "\n")
+                seqs.pop(seqid)
+        lu.close()
+        ru.close()
+    lp.close()
+    rp.close()
+
+
+def _stream_fastq(fqfile):
+    """Read a fastq file and provide an iterable of the sequence ID, the
+    full header, the sequence, and the quaity scores.
+
+    Note that the sequence ID is the header up until the first space,
+    while the header is the whole header.
+    """
+
+    if fqfile.endswith('.gz'):
+        qin = gzip.open(fqfile, 'rb')
+    else:
+        qin = open(fqfile, 'r')
+
+    while True:
+        header = qin.readline()
+        if not header:
+            break
+        header = header.strip()
+        seqidparts = header.split(' ')
+        seqid = seqidparts[0]
+        seq = qin.readline()
+        seq = seq.strip()
+        qin.readline()
+        qualscores = qin.readline()
+        qualscores = qualscores.strip()
+        header = header.replace('@', '', 1)
+        yield seqid, header, seq, qualscores
+
+
 def main():
     # Establish session
     session = boto3.session.Session()
@@ -158,8 +226,7 @@ def main():
     parser = Job.Runner.getDefaultArgumentParser()
     options = parser.parse_args()
     with Toil(options) as toil:
-        toil.start(Job.wrapJobFn(map_job, workflow, keys, download_bucket=download_bucket_name,
-                                 upload_bucket_name=upload_bucket_name))
+        toil.start(Job.wrapJobFn(map_job, workflow, keys, download_bucket_name, upload_bucket_name))
 
 
 if __name__ == '__main__':
