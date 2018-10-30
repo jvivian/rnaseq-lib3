@@ -56,7 +56,7 @@ def pair_fastqs(job, r1_id, r2_id):
 
     job.log('Pairing fastqs')
     pair_fastq(r1_path, r2_path)
-    job.deleteGlobalFile(r1_id), job.deleteGlobalFile(r2_id)
+    job.fileStore.deleteGlobalFile(r1_id), job.fileStore.deleteGlobalFile(r2_id)
 
     job.log('Gzipping fastqs')
     r1 = os.path.join(job.tempDir, 'R1.paired.fastq')
@@ -74,7 +74,7 @@ def tar_and_upload(job, r1_id, r2_id, key, upload_bucket_name):
     r2 = job.fileStore.readGlobalFile(r2_id, os.path.join(job.tempDir, 'R2.fastq.gz'))
 
     job.log('Tar files')
-    tarball_files(key, file_paths=[r1 + '.gz', r2 + '.gz'], output_dir=job.tempDir)
+    tarball_files(key, file_paths=[r1, r2], output_dir=job.tempDir)
     tar_path = os.path.join(job.tempDir, key)
 
     job.log('Uploading to S3')
