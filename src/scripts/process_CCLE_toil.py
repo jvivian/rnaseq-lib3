@@ -11,10 +11,10 @@ from toil.job import Job
 def workflow(job, key, download_bucket_name, upload_bucket_name):
     """Workflow DAG"""
     # Wrap job functions
-    download = job.wrapJobFn(download_sample, key, download_bucket_name, disk='50G', cores=2, memory='10G')
-    pair = job.wrapJobFn(pair_fastqs, download.rv(0), download.rv(1), cores=2, memory='70G', disk='60G')
+    download = job.wrapJobFn(download_sample, key, download_bucket_name, disk='75G', cores=2, memory='10G')
+    pair = job.wrapJobFn(pair_fastqs, download.rv(0), download.rv(1), cores=2, memory='70G', disk='70G')
     upload = job.wrapJobFn(tar_and_upload, pair.rv(0), pair.rv(1), key, upload_bucket_name,
-                           cores=1, memory='10G', disk='30G')
+                           cores=1, memory='10G', disk='40G')
 
     # Wire
     job.addChild(download)
