@@ -11,7 +11,7 @@ pip3 install --user boto3
 # aws creds
 mkdir ~/.aws
 
-# SSD Mount
+# SSD Mount (non-EBS r5d instances for example)
 sudo mkfs -t xfs /dev/nvme0n1
 sudo mkdir /data
 sudo mount -t xfs /dev/nvme0n1 /data
