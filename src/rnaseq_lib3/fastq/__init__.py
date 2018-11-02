@@ -87,6 +87,7 @@ def download_SRA(sra_id: str, work_dir: str = None, threads: int = None):
                   '--sra-id', sra_id,
                   '--threads', str(threads),
                   '--outdir', '/data',
+                  '--tmpdir', '/data',
                   '--gzip', '--skip-technical', '--readids', '--read-filter', 'pass',
                   '--dumpbase', '--split-files', '--clip']
     p = Popen(base_call + [tool] + parameters, stderr=PIPE, stdout=PIPE, universal_newlines=True)
