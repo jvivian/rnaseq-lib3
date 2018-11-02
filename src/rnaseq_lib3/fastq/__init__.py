@@ -1,11 +1,12 @@
 import gzip
+import multiprocessing
 import os
-from subprocess import Popen, PIPE
+from subprocess import check_call
 from typing import Tuple
 
 from tqdm import tqdm
 
-from rnaseq_lib3.docker import get_base_call
+from rnaseq_lib3.docker import get_base_call, fix_permissions
 
 
 # Adopted from: https://github.com/linsalrob/EdwardsLab/blob/master/bin/pair_fastq_fast.py
@@ -73,3 +74,20 @@ def _stream_fastq(fqfile: str) -> Tuple[str, str, str, str]:
         qualscores = qualscores.decode('utf-8').strip()
         header = header.replace('@', '', 1)
         yield seqid, header, seq, qualscores
+
+
+def download_SRA(sra_id: str, work_dir: str = None, threads: int = None):
+    work_dir = os.getcwd() if work_dir is None else os.path.abspath(work_dir)
+    threads = multiprocessing.cpu_count() if threads is None else threads
+
+    # Params
+    base_call = get_base_call(work_dir)
+    tool = 'nunoagostinho/parallel-fastq-dump'
+    parameters = ['parallel-fastq-dump',
+                  '--sra-id', sra_id,
+                  '--threads', str(threads),
+                  '--outdir', '/data',
+                  '--gzip', '--skip-technical', '--readids', '--read-filter', 'pass',
+                  '--dumpbase', '--split-files', '--clip']
+    check_call(base_call + [tool] + parameters)
+    fix_permissions(tool, work_dir=work_dir)
