@@ -1,7 +1,7 @@
 import gzip
 import multiprocessing
 import os
-from subprocess import check_call
+from subprocess import Popen, PIPE
 from typing import Tuple
 
 from tqdm import tqdm
@@ -89,5 +89,8 @@ def download_SRA(sra_id: str, work_dir: str = None, threads: int = None):
                   '--outdir', '/data',
                   '--gzip', '--skip-technical', '--readids', '--read-filter', 'pass',
                   '--dumpbase', '--split-files', '--clip']
-    check_call(base_call + [tool] + parameters)
+    p = Popen(base_call + [tool] + parameters, stderr=PIPE, stdout=PIPE, universal_newlines=True)
+    out, err = p.communicate()
+    if p.returncode != 0:
+        print(out, err)
     fix_permissions(tool, work_dir=work_dir)
