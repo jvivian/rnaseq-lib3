@@ -8,3 +8,8 @@ def rget(url: str, params: dict = None) -> requests.models.Response:
         return None
     else:
         return r
+
+def rreplace(s, old, new, occurrence):
+    """https://stackoverflow.com/users/230454/mg"""
+    li = s.rsplit(old, occurrence)
+    return new.join(li)
