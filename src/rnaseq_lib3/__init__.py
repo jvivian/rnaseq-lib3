@@ -7,8 +7,9 @@ import rnaseq_lib3.gtf
 import rnaseq_lib3.math
 import rnaseq_lib3.math.dist
 import rnaseq_lib3.math.plot
+import rnaseq_lib3.outlier
 import rnaseq_lib3.plot
+import rnaseq_lib3.sra
 import rnaseq_lib3.synapse
 import rnaseq_lib3.tcga
 import rnaseq_lib3.utils
-import rnaseq_lib3.outlier
