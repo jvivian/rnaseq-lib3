@@ -1,8 +1,9 @@
 import multiprocessing
 import os
-from subprocess import Popen, check_call, PIPE
+from subprocess import Popen, PIPE
 
 from rnaseq_lib3.docker import get_base_call, fix_permissions
+from rnaseq_lib3.utils import curl
 
 
 def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None):
@@ -45,11 +46,4 @@ def _prefetch(sra_id: str, work_dir: str = None):
     address = f'sra/sra-instant/reads/ByRun/sra/{p1}/{p2}/{sra_id}/{sra_id}.sra'
     url = os.path.join(base, address)
     # Call cURL and return file_path
-    return _curl(url, work_dir)
-
-
-def _curl(url: str, work_dir: str = None):
-    work_dir = os.getcwd() if work_dir is None else work_dir
-    file_path = os.path.join(work_dir, os.path.basename(url))
-    check_call(['curl', '-fs', '--retry', '5', url, '-o', file_path])
-    return file_path
+    return curl(url, work_dir)
