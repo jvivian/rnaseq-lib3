@@ -12,9 +12,11 @@ def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None):
     os.makedirs(work_dir, exist_ok=True)
 
     # Prefetch SRA file
+    print('Prefetching SRA file')
     sra_path = _prefetch(sra_id, work_dir)
 
     # Params
+    print('Running parallel-fastq-dump')
     base_call = get_base_call(work_dir)
     tool = 'nunoagostinho/parallel-fastq-dump'
     threads = multiprocessing.cpu_count() if threads is None else threads
