@@ -1,92 +1,74 @@
-from multiprocessing import cpu_count
-from typing import List, Dict, Tuple
+import pickle
+from typing import List, Tuple
 
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc3 as pm
-import scipy.stats as st
 import seaborn as sns
 from sklearn.feature_selection import SelectKBest
 
 
-def train_outlier_model(sample: pd.Series,
-                        background_df: pd.DataFrame,
-                        class_col: str,
-                        gene_pool: List[str] = None,
-                        training_genes: List[str] = None,
-                        n_samples: int = 200,
-                        n_chains: int = None,
-                        tune: int = 1000,
-                        target_accept: float = 0.90,
-                        n_genes: int = 50) -> Tuple[pm.model.Model, pm.backends.base.MultiTrace]:
+def outlier_model(sample: pd.Series,
+                  background_df: pd.DataFrame,
+                  class_col: str,
+                  training_genes: List[str] = None,
+                  gene_pool: List[str] = None,
+                  n_genes: int = 50,
+                  draws: int = 500,
+                  tune: int = 1000,
+                  n_chains: int = 4) -> Tuple[pm.model.Model, pm.backends.base.MultiTrace]:
     """
-    Trains Bayesian outlier model of n-of-1 sample against background datasets
+    Run Bayesian outlier model
 
     Args:
-        sample: N-of-1 expression vector
-        gene_pool: Gene pool to selectKBest from
-        training_genes: If provided, used instead of selecting KBest
-        background_df: Background dataset of expression where index = Samples
-        class_col: Column to use as class discriminator
-        n_samples: Number of samples to train
-        n_chains: Number of chains to run. Chains x n_samples = total samples. Defaults to num_cores
-        tune: `tune` parameter for `pm_sample`
-        target_accept: `target_accept` parameter for NUTS
-        n_genes: Number of genes to select via SelectKBest if `genes` is None
+        sample: N-of-1 sample to run   
+        background_df: Background dataframe to use in comparison
+        class_col: Column in background dataframe to use as categorical discriminator
+        training_genes: Genes to use during training
+        gene_pool: Set of genes
+        draws: Number of draws during sampling
+        tune: Sampling parameter
+        n_chains: Sampling parameter
 
     Returns:
-        (Model, Trace) from PyMC3
+
     """
-    assert any([gene_pool, training_genes]), 'Either gene_pool or training_genes needs to be provided'
+    assert any([gene_pool, training_genes]), 'gene_pool or training_genes must be supplied'
 
-    # There is both a n_chains and njobs command, but this simplifies things a bit since almost always chains >= 4
-    n_chains = cpu_count() if n_chains is None else n_chains
-    classes = sorted(background_df[class_col].unique())
-    n_genes = n_genes if training_genes is None else len(training_genes)
-    print(f'Running {n_chains} on as many cores (if >= 4)')
-    print(f'Number of parameters in model: {num_params(n_genes, len(classes))}')
+    # Create categorical index
+    idx = background_df[class_col].astype('category').cat.codes
+    n_cats = len(background_df[class_col].unique())
 
-    # Pick genes to train on if not passed in
-    if training_genes is None:
-        print(f'Genes not selected, picking {n_genes} via SelectKBest')
-        k = SelectKBest(k=n_genes)
-        k.fit_transform(background_df[gene_pool], background_df[class_col])
-        training_genes = [gene_pool[i] for i in k.get_support(indices=True)]
+    # Identify gene set to train on
+    if not training_genes:
+        training_genes = select_k_best_genes(background_df, genes=gene_pool, class_col=class_col, n=n_genes)
 
-    # Fits
-    fits = fit_genes_gaussian(df=background_df, class_col=class_col, genes=training_genes)
-
-    # Define and run model
+    # Define model and sample
     with pm.Model() as model:
-        # Priors for linear model
-        alpha = pm.Normal('alpha', 0, 5)
-        beta = pm.Normal('beta', 0, 5, shape=len(classes))
+        # Alpha in linear model
+        a = pm.Normal('a', mu=0, sd=10)
 
-        # Convert fits into Normal RVs
-        exp_rvs = {key: pm.Normal(key, *fits[key]) for key in fits}
+        # If number of categories is 1, we don't need hyperpriors for b
+        if n_cats == 1:
+            b = pm.Normal('b', mu=0, sd=10, shape=1)
+        else:
+            mu_b = pm.Normal('mu_b', mu=0, sd=10)
+            sigma_b = pm.InverseGamma('sigma_b', 2.1, 1)
+            b = pm.Normal('b', mu=mu_b, sd=sigma_b, shape=n_cats)
 
-        # Define linear model for each gene
+        # Linear model
         mu = {}
-        for i, gene in enumerate(training_genes):
-            mu[gene] = alpha
-            for j, name in enumerate(classes):
-                mu[gene] += exp_rvs[f'{gene}-{name}'] * beta[j]
+        for gene in training_genes:
+            mu[gene] = a + b[idx] * background_df[gene]
 
-        # Single sigma across all genes
-        sigma = pm.InverseGamma('sigma', 1)
-
-        # Define z distributions for each mu
+        # Model estimation
+        eps = pm.InverseGamma('eps', 2.1, 1)
         z = {}
-        for i, gene in enumerate(training_genes):
-            obs = sample[gene]
-            z[gene] = pm.Laplace(gene, mu=mu[gene], b=sigma, observed=obs)
+        for gene in training_genes:
+            z = pm.Laplace(gene, mu=mu[gene], b=eps, observed=sample[gene])
 
-        # Calculate trace
-        trace = pm.sample(n_samples,
-                          tune=tune,
-                          nuts_kwargs={'target_accept': target_accept},
-                          njobs=n_chains)
+        trace = pm.sample(draws=draws, tune=tune, n_chains=n_chains)
     return model, trace
 
 
@@ -148,28 +130,18 @@ def posterior_pvalues(trace, sample, genes, background_df, class_col):
     return pd.DataFrame({'gene': genes, 'pval': [ppp[g] for g in genes]})
 
 
-def fit_genes_gaussian(df: pd.DataFrame, class_col: str, genes: List[str]) -> Dict[str, Tuple[float, float]]:
-    """
-    Fits Gaussian distribution to genes
-
-    Args:
-        df: DataFrame of gene expression
-        class_col: Column in dataframe to use for class separation
-        genes: Genes to train on
-
-    Returns:
-        Dictionary of Gaussian fits for genes and given classes
-    """
-    fits = {}
-    classes = sorted(df[class_col].unique())
-    for c in classes:
-        sub = df[df[class_col] == c]
-        for gene in genes:
-            key = f'{gene}-{c}'
-            fits[key] = st.norm.fit(sub[gene])
-    return fits
+def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col, n=50):
+    k = SelectKBest(k=n)
+    k.fit_transform(df[genes], df[class_col])
+    return [genes[i] for i in k.get_support(indices=True)]
 
 
-def num_params(n_genes, n_datasets):
-    """Calculates number of parameters in model"""
-    return (n_genes * n_datasets) + (n_datasets + 1) + n_genes + 1 + n_genes
+def _pickle(model_name, trace, model):
+    with open(model_name, 'wb') as buff:
+        pickle.dump({'model': model, 'trace': trace}, buff)
+
+
+def _load_pickle(pkl_path):
+    with open(pkl_path, 'rb') as buff:
+        data = pickle.load(buff)
+    return data['model'], data['trace']
