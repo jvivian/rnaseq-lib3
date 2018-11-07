@@ -15,11 +15,11 @@ def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None):
     if len(os.listdir(work_dir)) > 0:
         print(f'Files in directory {work_dir}')
         return 0
-    print('Prefetching SRA file')
+    print(f'Prefetching SRA file: {sra_id}')
     sra_path = _prefetch(sra_id, work_dir)
 
     # Params
-    print('Running parallel-fastq-dump')
+    print('\tRunning parallel-fastq-dump')
     base_call = get_base_call(work_dir)
     tool = 'nunoagostinho/parallel-fastq-dump'
     threads = multiprocessing.cpu_count() if threads is None else threads
@@ -38,9 +38,13 @@ def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None):
         os.remove(sra_path)
         fix_permissions(tool, work_dir=work_dir)
         fastqs = os.listdir(work_dir)
-        r1 = [x for x in fastqs if x.endswith('_1.fastq.gz')][0]
-        r2 = [x for x in fastqs if x.endswith('_2.fastq.gz')][0]
-        return r1, r2
+        try:
+            r1 = [x for x in fastqs if x.endswith('_1.fastq.gz')][0]
+            r2 = [x for x in fastqs if x.endswith('_2.fastq.gz')][0]
+            return r1, r2
+        except IndexError:
+            print(f'\tSample {sra_id} does not appear paired. {fastqs}')
+            return 1
 
 
 def _prefetch(sra_id: str, work_dir: str = None):
