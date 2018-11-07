@@ -12,6 +12,9 @@ def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None):
     os.makedirs(work_dir, exist_ok=True)
 
     # Prefetch SRA file
+    if len(os.listdir(work_dir)) > 0:
+        print(f'Files in directory {work_dir}')
+        return 0
     print('Prefetching SRA file')
     sra_path = _prefetch(sra_id, work_dir)
 
