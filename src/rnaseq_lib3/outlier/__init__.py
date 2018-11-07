@@ -9,15 +9,15 @@ import seaborn as sns
 from sklearn.feature_selection import SelectKBest
 
 
-def outlier_model(sample: pd.Series,
-                  background_df: pd.DataFrame,
-                  class_col: str,
-                  training_genes: List[str] = None,
-                  gene_pool: List[str] = None,
-                  n_genes: int = 50,
-                  draws: int = 500,
-                  tune: int = 1000,
-                  n_chains: int = 4) -> Tuple[pm.model.Model, pm.backends.base.MultiTrace]:
+def model(sample: pd.Series,
+          background_df: pd.DataFrame,
+          class_col: str,
+          training_genes: List[str] = None,
+          gene_pool: List[str] = None,
+          n_genes: int = 50,
+          draws: int = 500,
+          tune: int = 1000,
+          n_chains: int = 4) -> Tuple[pm.model.Model, pm.backends.base.MultiTrace]:
     """
     Run Bayesian outlier model
 
