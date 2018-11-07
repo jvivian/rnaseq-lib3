@@ -66,7 +66,7 @@ def model(sample: pd.Series,
         eps = pm.InverseGamma('eps', 2.1, 1)
         z = {}
         for gene in training_genes:
-            z = pm.Laplace(gene, mu=mu[gene], b=eps, observed=sample[gene])
+            z[gene] = pm.Laplace(gene, mu=mu[gene], b=eps, observed=sample[gene])
 
         trace = pm.sample(draws=draws, tune=tune, n_chains=n_chains)
     return model, trace
