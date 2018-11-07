@@ -6,7 +6,7 @@ from rnaseq_lib3.docker import get_base_call, fix_permissions
 from rnaseq_lib3.utils import curl
 
 
-def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None):
+def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None, split: str ='--split-3'):
     work_dir = os.getcwd() if work_dir is None else os.path.abspath(work_dir)
     work_dir = os.path.join(work_dir, sra_id)
     os.makedirs(work_dir, exist_ok=True)
@@ -28,7 +28,7 @@ def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None):
                   '--tmpdir', '/data',
                   '--outdir', '/data',
                   '--gzip', '--skip-technical', '--readids', '--read-filter', 'pass',
-                  '--dumpbase', '--split-3', '--clip',
+                  '--dumpbase', '--clip', split,
                   '-s', f'/data/{os.path.basename(sra_path)}']
     p = Popen(base_call + [tool] + parameters, stderr=PIPE, stdout=PIPE, universal_newlines=True)
     out, err = p.communicate()
