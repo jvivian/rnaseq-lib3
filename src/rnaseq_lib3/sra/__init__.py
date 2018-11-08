@@ -7,6 +7,18 @@ from rnaseq_lib3.utils import curl
 
 
 def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None, split: str ='--split-3'):
+    """
+    Wrapper for fastq-dump
+
+    Args:
+        sra_id: SRA run ID
+        work_dir: Output directory
+        threads: Number of cores to use
+        split: split argument
+
+    Returns:
+        If paired, will attempt to return filepaths to paired files
+    """
     work_dir = os.getcwd() if work_dir is None else os.path.abspath(work_dir)
     work_dir = os.path.join(work_dir, sra_id)
     os.makedirs(work_dir, exist_ok=True)
@@ -48,7 +60,7 @@ def fastq_dump(sra_id: str, work_dir: str = None, threads: int = None, split: st
 
 
 def _prefetch(sra_id: str, work_dir: str = None):
-    """Prefect SRA file"""
+    """Prefetch SRA file via URL as its much faster than using fastq-dump"""
     # Construct SRA URL
     base = 'ftp://ftp-trace.ncbi.nih.gov'
     p1, p2 = sra_id[:3], sra_id[:6]
