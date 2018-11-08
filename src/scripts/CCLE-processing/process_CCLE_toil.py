@@ -226,7 +226,11 @@ def main():
     parser = Job.Runner.getDefaultArgumentParser()
     options = parser.parse_args()
     with Toil(options) as toil:
-        toil.start(Job.wrapJobFn(map_job, workflow, keys, download_bucket_name, upload_bucket_name))
+        if not toil.options.restart:
+            toil.start(Job.wrapJobFn(map_job, workflow, keys, download_bucket_name, upload_bucket_name))
+        else:
+            toil.restart()
+
 
 
 if __name__ == '__main__':
