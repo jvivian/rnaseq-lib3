@@ -1,12 +1,10 @@
 import gzip
-import multiprocessing
 import os
-from subprocess import Popen, PIPE
-from typing import Tuple
+import re
+import subprocess
+from typing import Tuple, List
 
 from tqdm import tqdm
-
-from rnaseq_lib3.docker import get_base_call, fix_permissions
 
 
 # Adopted from: https://github.com/linsalrob/EdwardsLab/blob/master/bin/pair_fastq_fast.py
@@ -76,22 +74,54 @@ def _stream_fastq(fqfile: str) -> Tuple[str, str, str, str]:
         yield seqid, header, seq, qualscores
 
 
-def download_SRA(sra_id: str, work_dir: str = None, threads: int = None):
-    work_dir = os.getcwd() if work_dir is None else os.path.abspath(work_dir)
-    threads = multiprocessing.cpu_count() if threads is None else threads
+def combine_paired(fastqs: List[str], out_dir: str = None, name: str = None):
+    """
+    Combine a list of paired fastqs into a single fastq pair
 
-    # Params
-    base_call = get_base_call(work_dir)
-    tool = 'nunoagostinho/parallel-fastq-dump'
-    parameters = ['parallel-fastq-dump',
-                  '--sra-id', sra_id,
-                  '--threads', str(threads),
-                  '--outdir', '/data',
-                  '--tmpdir', '/data',
-                  '--gzip', '--skip-technical', '--readids', '--read-filter', 'pass',
-                  '--dumpbase', '--split-files', '--clip']
-    p = Popen(base_call + [tool] + parameters, stderr=PIPE, stdout=PIPE, universal_newlines=True)
-    out, err = p.communicate()
-    if p.returncode != 0:
-        print(out, err)
-    fix_permissions(tool, work_dir=work_dir)
+    Args:
+        fastqs: List fastq filepaths
+        out_dir: Output directory
+        name: Name to prepend to output file (will be joined with a '_' automatically)
+    """
+    r1, r2 = [], []
+    # Pattern convention: Look for "R1" / "R2" in the filename, or "_1" / "_2" before the extension
+    pattern = re.compile('(?:^|[._-])(R[12]|[12]\.f)')
+    for fastq in sorted(fastqs):
+        match = pattern.search(os.path.basename(fastq))
+        if not match:
+            raise RuntimeError(f'FASTQ file name fails to meet required convention for paired reads {fastq}')
+        elif '1' in match.group():
+            r1.append(fastq)
+        elif '2' in match.group():
+            r2.append(fastq)
+        else:
+            assert False, match.group()
+    assert len(r1) == len(r2), f'Check fastq names, uneven number of pairs found.\nr1: {r1}\nr2: {r2}'
+    # Concatenate fastqs
+    command = 'zcat' if r1[0].endswith('.gz') and r2[0].endswith('.gz') else 'cat'
+
+    # If sample is already a single R1 / R2 fastq
+    out_dir = os.getcwd() if out_dir is None else out_dir
+    name = '' if name is None else name.rstrip('_') + '_'
+    with open(os.path.join(out_dir, name + 'R1.fastq'), 'w') as f1:
+        p1 = subprocess.Popen([command] + r1, stdout=f1)
+    with open(os.path.join(out_dir, name + 'R2.fastq'), 'w') as f2:
+        p2 = subprocess.Popen([command] + r2, stdout=f2)
+    p1.wait()
+    p2.wait()
+
+
+def combine_single_end(fastqs: List[str], out_dir: str = None, name: str = None):
+    """
+    Combine a list of single-end fastqs into a single fastq
+
+    Args:
+        fastqs: List fastq filepaths
+        out_dir: Output directory
+        name: Name to prepend to output file (will be joined with a '_' automatically)
+    """
+    out_dir = os.getcwd() if out_dir is None else out_dir
+    name = '' if name is None else name.rstrip('_') + '_'
+    command = 'zcat' if fastqs[0].endswith('.gz') else 'cat'
+    with open(os.path.join(out_dir, name + 'R1.fastq'), 'w') as f:
+        subprocess.check_call([command] + fastqs, stdout=f)
