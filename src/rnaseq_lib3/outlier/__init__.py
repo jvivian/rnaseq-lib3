@@ -6,6 +6,8 @@ import numpy as np
 import pandas as pd
 import pymc3 as pm
 import seaborn as sns
+from pymc3.backends.base import MultiTrace
+from pymc3.model import Model
 from sklearn.feature_selection import SelectKBest
 
 
@@ -17,7 +19,7 @@ def model(sample: pd.Series,
           n_genes: int = 50,
           draws: int = 500,
           tune: int = 1000,
-          n_chains: int = 4) -> Tuple[pm.model.Model, pm.backends.base.MultiTrace]:
+          n_chains: int = 4) -> Tuple[Model, MultiTrace]:
     """
     Run Bayesian outlier model
 
@@ -72,7 +74,7 @@ def model(sample: pd.Series,
     return model, trace
 
 
-def posterior_from_linear(trace: pm.backends.base.MultiTrace,
+def posterior_from_linear(trace: MultiTrace,
                           sample: pd.Series,
                           gene: str,
                           background_df: pd.DataFrame,
@@ -92,10 +94,10 @@ def posterior_from_linear(trace: pm.backends.base.MultiTrace,
     group = sorted(background_df[class_col].unique())
 
     # Calculate posterior from linear model
-    z = trace['alpha']
+    z = trace['a']
     for i, t in enumerate(group):
         samples = np.random.choice(background_df[background_df[class_col] == t][gene], len(z))
-        z += trace['beta'][:, i] * samples
+        z += trace['b'][:, i] * samples
 
     # Calculate PPP
     z_true = sample[gene]
@@ -112,18 +114,24 @@ def posterior_from_linear(trace: pm.backends.base.MultiTrace,
         sns.kdeplot(z, label='Linear-Equation')
 
 
-def posterior_pvalues(trace, sample, genes, background_df, class_col):
-    group = sorted(background_df[class_col].unique())
+def posterior_pvalues(sample: pd.Series, trace: MultiTrace, model: Model, genes: List[str]) -> pd.DataFrame:
+    """
+    Calculates posterior pvalues from `pm.sample_ppc` for training genes against an n-of-1 sample
 
+    Args:
+        sample: n-of-1 sample to compare
+        trace: PyMC3 trace
+        model: PyMC3 model
+        genes: List of genes that were used in training
+
+    Returns:
+        DataFrame containing genes and pvalues
+    """
+    ppc = pm.sample_ppc(trace, model=model)
     ppp = {}
     # For each gene, calculate posterior estimate and calculate PPP
     for gene in genes:
-
-        z = trace['alpha']
-        for i, t in enumerate(group):
-            samples = np.random.choice(background_df[background_df[class_col] == t][gene], len(z))
-            z += trace['beta'][:, i] * samples
-
+        z = ppc[gene]
         z_true = sample[gene]
         ppp[gene] = sum(z_true < z) / len(z)
 
@@ -150,7 +158,7 @@ def _load_pickle(pkl_path):
 def plot_weights(classes, trace, output: str = None):
     weight_by_class = pd.DataFrame({'Class': classes,
                                     'Weights': [np.median(trace['b'][:, x])
-                                                 for x in range(len(classes))]})
+                                                for x in range(len(classes))]})
     weight_by_class = weight_by_class.sort_values('Weights', ascending=False)
 
     plt.figure(figsize=(12, 4))
