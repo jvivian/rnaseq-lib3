@@ -32,7 +32,7 @@ def model(sample: pd.Series,
         n_chains: Sampling parameter
 
     Returns:
-
+        Model and Trace from PyMC3
     """
     assert any([gene_pool, training_genes]), 'gene_pool or training_genes must be supplied'
 
@@ -145,3 +145,17 @@ def _load_pickle(pkl_path):
     with open(pkl_path, 'rb') as buff:
         data = pickle.load(buff)
     return data['model'], data['trace']
+
+
+def plot_weights(classes, trace, output: str = None):
+    weight_by_class = pd.DataFrame({'Class': classes,
+                                    'Weights': [np.median(trace['b'][:, x])
+                                                 for x in range(len(classes))]})
+    weight_by_class = weight_by_class.sort_values('Weights', ascending=False)
+
+    plt.figure(figsize=(12, 4))
+    sns.barplot(data=weight_by_class, x='Tissues', y='Weights')
+    plt.xticks(rotation=90)
+    plt.title('Median Beta Coefficient Weight by Tissue for N-of-1 Prostate Adenocarcinoma Sample')
+    if output:
+        plt.savefig(output, bbox_inches='tight')
