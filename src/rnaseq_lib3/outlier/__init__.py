@@ -29,6 +29,7 @@ def model(sample: pd.Series,
         class_col: Column in background dataframe to use as categorical discriminator
         training_genes: Genes to use during training
         gene_pool: Set of genes
+        n_genes: Number of genes to use in training if not supplied via training_genes
         draws: Number of draws during sampling
         tune: Sampling parameter
         n_chains: Sampling parameter
@@ -144,7 +145,7 @@ def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col, n=50):
     return [genes[i] for i in k.get_support(indices=True)]
 
 
-def _pickle(model_name, trace, model):
+def _pickle(model_name, model, trace):
     with open(model_name, 'wb') as buff:
         pickle.dump({'model': model, 'trace': trace}, buff)
 
@@ -156,9 +157,10 @@ def _load_pickle(pkl_path):
 
 
 def plot_weights(classes, trace, output: str = None):
+    """Plot model coefficients associated with each class"""
+    # Construct weight by class DataFrame
     weight_by_class = pd.DataFrame({'Class': classes,
-                                    'Weights': [np.median(trace['b'][:, x])
-                                                for x in range(len(classes))]})
+                                    'Weights': [np.median(trace['b'][:, x]) for x in range(len(classes))]})
     weight_by_class = weight_by_class.sort_values('Weights', ascending=False)
 
     plt.figure(figsize=(12, 4))
