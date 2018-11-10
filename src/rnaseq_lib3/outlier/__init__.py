@@ -164,7 +164,7 @@ def plot_weights(classes, trace, output: str = None):
     weight_by_class = weight_by_class.sort_values('Weights', ascending=False)
 
     plt.figure(figsize=(12, 4))
-    sns.barplot(data=weight_by_class, x='Tissues', y='Weights')
+    sns.barplot(data=weight_by_class, x='Class', y='Weights')
     plt.xticks(rotation=90)
     plt.title('Median Beta Coefficient Weight by Tissue for N-of-1 Prostate Adenocarcinoma Sample')
     if output:
