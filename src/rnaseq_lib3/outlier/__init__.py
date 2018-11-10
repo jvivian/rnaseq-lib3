@@ -166,6 +166,6 @@ def plot_weights(classes, trace, output: str = None):
     plt.figure(figsize=(12, 4))
     sns.barplot(data=weight_by_class, x='Class', y='Weights')
     plt.xticks(rotation=90)
-    plt.title('Median Beta Coefficient Weight by Tissue for N-of-1 Prostate Adenocarcinoma Sample')
+    plt.title('Median Beta Coefficient Weight by Tissue for N-of-1 Sample')
     if output:
         plt.savefig(output, bbox_inches='tight')
