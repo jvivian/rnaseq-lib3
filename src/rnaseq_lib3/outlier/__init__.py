@@ -132,7 +132,7 @@ def posterior_pvalues(sample: pd.Series, trace: MultiTrace, model: Model, genes:
     ppp = {}
     # For each gene, calculate posterior estimate and calculate PPP
     for gene in genes:
-        z = ppc[gene]
+        z = ppc[gene].ravel()
         z_true = sample[gene]
         ppp[gene] = sum(z_true < z) / len(z)
 
