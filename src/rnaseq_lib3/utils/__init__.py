@@ -30,7 +30,7 @@ def curl(url: str, work_dir: str = None):
 
 
 # Files
-def tarball_files(tar_name: str, file_paths: List[str], output_dir: str = '.', prefix: str = ''):
+def tarball_files(tar_name: str, file_paths: List[str], output_dir: str = '.', prefix: str = None):
     """
     Creates a tarball from a group of files
 
@@ -40,6 +40,7 @@ def tarball_files(tar_name: str, file_paths: List[str], output_dir: str = '.', p
         output_dir: Output destination
         prefix: Optional prefix for files inside the tarball
     """
+    prefix = '' if prefix is None else prefix
     with tarfile.open(os.path.join(output_dir, tar_name), 'w:gz') as f_out:
         for file_path in file_paths:
             if not file_path.startswith('/'):
