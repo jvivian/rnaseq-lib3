@@ -1,3 +1,4 @@
+import rnaseq_lib3.aws
 import rnaseq_lib3.deseq2
 import rnaseq_lib3.dimensionality_reduction
 import rnaseq_lib3.docker
