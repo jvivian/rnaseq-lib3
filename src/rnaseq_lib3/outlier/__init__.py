@@ -136,7 +136,7 @@ def posterior_pvalues(sample: pd.Series, trace: MultiTrace, model: Model, genes:
         z_true = sample[gene]
         ppp[gene] = sum(z_true < z) / len(z)
 
-    return pd.DataFrame({'gene': genes, 'pval': [ppp[g] for g in genes]})
+    return pd.DataFrame({'gene': genes, 'pval': [ppp[g] for g in genes]}).sort_values('pval')
 
 
 def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col, n=50):
