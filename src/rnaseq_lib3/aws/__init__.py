@@ -37,7 +37,7 @@ def upload_file(bucket_name, file_path, key=None, profile_name='default'):
     bucket = s3.Bucket(bucket_name)
 
     key = os.path.basename(file_path) if key is None else key
-    bucket.upload_file(file_path, key=key)
+    bucket.upload_file(file_path, key)
 
 
 def bucket_size(bucket_name, profile_name='default'):
