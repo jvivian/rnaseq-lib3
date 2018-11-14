@@ -1,3 +1,5 @@
+import os
+
 import boto3
 
 
@@ -27,6 +29,14 @@ def delete_bucket(bucket_name, profile_name='default'):
     bucket_objs = bucket.objects.all()
     bucket_objs.delete()
     bucket.delete()
+
+def upload_file(bucket_name, file_path, key=None, profile_name='default'):
+    session = boto3.session.Session(profile_name=profile_name)
+    s3 = session.resource('s3')
+    bucket = s3.Bucket(bucket_name)
+
+    key = os.path.basename(file_path) if key is None else key
+    bucket.upload_file(file_path, key=key)
 
 
 # EC2
