@@ -30,6 +30,7 @@ def delete_bucket(bucket_name, profile_name='default'):
     bucket_objs.delete()
     bucket.delete()
 
+
 def upload_file(bucket_name, file_path, key=None, profile_name='default'):
     session = boto3.session.Session(profile_name=profile_name)
     s3 = session.resource('s3')
@@ -37,6 +38,16 @@ def upload_file(bucket_name, file_path, key=None, profile_name='default'):
 
     key = os.path.basename(file_path) if key is None else key
     bucket.upload_file(file_path, key=key)
+
+
+def bucket_size(bucket_name, profile_name='default'):
+    session = boto3.session.Session(profile_name=profile_name)
+    s3 = session.resource('s3')
+    bucket = s3.Bucket(bucket_name)
+
+    size = sum([obj.size for obj in bucket.objects.all()]) / 1e9
+    print(f'Size in Gigabytes: {size}')
+    return size
 
 
 # EC2
