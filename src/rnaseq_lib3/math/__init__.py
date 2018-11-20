@@ -6,7 +6,7 @@ from statsmodels.stats.stattools import medcouple
 
 
 # Outlier
-def iqr_bounds(ys: List[Union[float, int]], whis=1.5) -> Tuple[float, float]:
+def iqr_bounds(ys: List[Union[float, int]], whis: float = 1.5) -> Tuple[float, float]:
     """
     Return upper and lower bound for an array of values
     Lower bound: Q1 - (IQR * 1.5)
@@ -14,6 +14,7 @@ def iqr_bounds(ys: List[Union[float, int]], whis=1.5) -> Tuple[float, float]:
 
     Args:
         ys: Array of values
+        whis: Constant value for whisker
 
     Returns:
         Upper and lower bound
@@ -29,8 +30,8 @@ def std_bounds(ys: List[Union[float, int]], num_std: int = 2) -> Tuple[float, fl
     """Return upper and lower bounds for an array of values"""
     u = np.mean(ys)
     std = np.std(ys)
-    upper = u + num_std * std
-    lower = u - num_std * std
+    upper = float(u + num_std * std)
+    lower = float(u - num_std * std)
     return upper, lower
 
 
