@@ -4,7 +4,7 @@ import boto3
 
 
 # S3
-def list_all_buckets(profile_name='default'):
+def list_all_buckets(profile_name: str='default'):
     session = boto3.session.Session(profile_name=profile_name)
     s3 = session.resource('s3')
     for bucket in s3.buckets.all():
