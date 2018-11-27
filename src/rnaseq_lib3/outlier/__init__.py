@@ -17,6 +17,7 @@ def run_model(sample: pd.Series,
               training_genes: List[str] = None,
               gene_pool: List[str] = None,
               n_genes: int = 50,
+              beta_func=pm.Normal,
               draws: int = 500,
               tune: int = 1000,
               n_chains: int = 4) -> Tuple[Model, MultiTrace]:
@@ -54,11 +55,11 @@ def run_model(sample: pd.Series,
 
         # If number of categories is 1, we don't need hyperpriors for b
         if n_cats == 1:
-            b = pm.Normal('b', mu=0, sd=10, shape=1)
+            b = beta_func('b', mu=0, sd=10, shape=1)
         else:
             mu_b = pm.Normal('mu_b', mu=0, sd=10)
             sigma_b = pm.InverseGamma('sigma_b', 2.1, 1)
-            b = pm.Normal('b', mu=mu_b, sd=sigma_b, shape=n_cats)
+            b = beta_func('b', mu=mu_b, sd=sigma_b, shape=n_cats)
 
         # Linear model
         mu = {}
