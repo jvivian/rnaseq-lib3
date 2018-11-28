@@ -11,6 +11,7 @@ import trimap
 from pymc3.backends.base import MultiTrace
 from pymc3.model import Model
 from sklearn.feature_selection import SelectKBest
+from sklearn.manifold import t_sne
 
 
 def run_model(sample: pd.Series,
