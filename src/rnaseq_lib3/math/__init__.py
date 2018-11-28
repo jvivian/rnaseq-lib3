@@ -23,7 +23,7 @@ def iqr_bounds(ys: List[Union[float, int]], whis: float = 1.5) -> Tuple[float, f
     iqr = quartile_3 - quartile_1
     lower_bound = quartile_1 - (iqr * whis)
     upper_bound = quartile_3 + (iqr * whis)
-    return upper_bound, lower_bound
+    return lower_bound, upper_bound
 
 
 def std_bounds(ys: List[Union[float, int]], num_std: int = 2) -> Tuple[float, float]:
