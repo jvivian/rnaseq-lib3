@@ -33,6 +33,7 @@ def run_model(sample: pd.Series,
         training_genes: Genes to use during training
         gene_pool: Set of genes
         n_genes: Number of genes to use in training if not supplied via training_genes
+        beta_func: PyMC3 Distribution to use for beta function. Must accept mu and sd.
         draws: Number of draws during sampling
         tune: Sampling parameter
         n_chains: Sampling parameter
