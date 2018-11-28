@@ -1,11 +1,13 @@
 import pickle
 from typing import List, Tuple
 
+import holoviews as hv
 import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc3 as pm
 import seaborn as sns
+import trimap
 from pymc3.backends.base import MultiTrace
 from pymc3.model import Model
 from sklearn.feature_selection import SelectKBest
@@ -170,3 +172,33 @@ def plot_weights(classes, trace, output: str = None):
     plt.title('Median Beta Coefficient Weight by Tissue for N-of-1 Sample')
     if output:
         plt.savefig(output, bbox_inches='tight')
+
+
+def dimensionality_reduction(sample: pd.Series,
+                             background_df: pd.DataFrame,
+                             genes: List[str],
+                             col: str,
+                             method='trimap') -> hv.Scatter:
+    """
+    Wrapper for returning trimap plot with column for `color_index` and `size_index`
+
+    Args:
+        sample: n-of-1 sample. Gets own label
+        background_df: Background dataset
+        genes: Genes to use in dimensionality reduction
+        col: Column to use for color_index
+        method: Method of dimensionality reduction. `trimap` or `tsne`
+
+    Returns:
+        Holoviews Scatter object of plot with associated vdims
+    """
+    assert method == 'trimap' or method == 'tsne', '`method` must be either `trimap` or `tsne`'
+    combined = background_df.append(sample)
+    if method == 'trimap':
+        reduced = trimap.TRIMAP().fit_transform(combined[genes])
+    else:
+        reduced = t_sne.TSNE().fit_transform(combined[genes])
+    df = pd.DataFrame(reduced, columns=['x', 'y'])
+    df[col] = background_df[col].tolist() + [f'N-of-1 - {sample[col]}']
+    df['size'] = [1 for _ in background_df[col]] + [5]
+    return hv.Scatter(data=df, kdims=['x'], vdims=['y', col, 'size'])
