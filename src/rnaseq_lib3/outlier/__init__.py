@@ -121,14 +121,15 @@ def posterior_predictive_pval(sample: pd.Series, ppc: Dict[str, np.array]):
 def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
     pvals = posterior_predictive_pval(sample, ppc)[gene]
     z = ppc[gene].ravel()
+    pval = pvals[gene]
     # Plot
     if ax:
         ax.axvline(sample[gene], color='red', label='z-true')
-        ax.set_title(f'{gene} - P: {pvals[gene]}')
+        ax.set_title(f'{gene} - P: {pval}')
         sns.kdeplot(z, label='Linear-Equation', ax=ax)
     else:
         plt.axvline(sample[gene], color='red', label='z-true')
-        plt.title(f'{gene} - P: {pvals[gene]}')
+        plt.title(f'{gene} - P: {pval}')
         sns.kdeplot(z, label='Linear-Equation')
 
 
