@@ -1,5 +1,5 @@
 import pickle
-from typing import List, Tuple
+from typing import List, Tuple, Dict
 
 import holoviews as hv
 import matplotlib.pyplot as plt
@@ -80,46 +80,59 @@ def run_model(sample: pd.Series,
     return model, trace
 
 
-def posterior_from_linear(trace: MultiTrace,
-                          sample: pd.Series,
-                          gene: str,
-                          background_df: pd.DataFrame,
-                          class_col: str,
-                          ax=None):
+def ppc_from_coefs(trace: MultiTrace,
+                   genes: List[str],
+                   background_df: pd.DataFrame,
+                   class_col: str,
+                   num_samples: int = 500):
     """
     Draws posterior using the linear model coefficients
 
     Args:
         trace: Trace from PyMC3
-        sample: N-of-1 sample
-        gene: Gene of interest
+        genes: Gene of interest
         background_df: Background dataset of expression where index = Samples
         class_col: Column to use as class discriminator
-        ax: Optional ax input if using within subplots
+        num_samples: Number of sampling iterations
     """
-    group = sorted(background_df[class_col].unique())
+    # Categorical code mapping
+    codes = {cat: i for i, cat in enumerate(background_df[class_col].unique())}
+    code_vec = [codes[x] for x in background_df[class_col]]
 
     # Calculate posterior from linear model
-    z = trace['a']
-    for i, t in enumerate(group):
-        samples = np.random.choice(background_df[background_df[class_col] == t][gene], len(z))
-        z += trace['b'][:, i] * samples
+    zs = {gene: np.zeros((500, len(background_df))) for gene in genes}
+    for i in range(num_samples):
+        z = trace['a'][i] + background_df[genes].mul([trace['b'][i, x] for x in code_vec], axis=0)
+        for gene in z.columns:
+            zs[gene][i, :] = np.random.laplace(loc=z[gene], scale=trace['eps'].mean())
 
-    # Calculate PPP
-    z_true = sample[gene]
-    ppp = round(sum(z_true < z) / len(z), 2)
+    return zs
 
+
+def posterior_predictive_pval(sample: pd.Series, ppc: Dict[str, np.array]):
+    pvals = {}
+    for gene in ppc:
+        z_true = sample[gene]
+        z = ppc[gene].ravel()
+        pvals[gene] = round(sum(z_true < z) / len(z), 2)
+    return pvals
+
+
+def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
+    pvals = posterior_predictive_pval(sample, ppc)[gene]
+    z = ppc[gene].ravel()
     # Plot
     if ax:
         ax.axvline(sample[gene], color='red', label='z-true')
-        ax.set_title(f'{gene} - P: {ppp}')
+        ax.set_title(f'{gene} - P: {pvals[gene]}')
         sns.kdeplot(z, label='Linear-Equation', ax=ax)
     else:
         plt.axvline(sample[gene], color='red', label='z-true')
-        plt.title(f'{gene} - P: {ppp}')
+        plt.title(f'{gene} - P: {pvals[gene]}')
         sns.kdeplot(z, label='Linear-Equation')
 
 
+# TODO: Delete in favor of using above instead of sample_ppc?
 def posterior_pvalues(sample: pd.Series, trace: MultiTrace, model: Model, genes: List[str]) -> pd.DataFrame:
     """
     Calculates posterior pvalues from `pm.sample_ppc` for training genes against an n-of-1 sample
@@ -161,15 +174,19 @@ def _load_pickle(pkl_path):
     return data['model'], data['trace']
 
 
+def calculate_weights(classes, trace):
+    weight_by_class = pd.DataFrame({'Class': classes,
+                                    'Weights': [np.median(trace['b'][:, x]) for x in range(len(classes))]})
+    return weight_by_class.sort_values('Weights', ascending=False)
+
+
 def plot_weights(classes, trace, output: str = None):
     """Plot model coefficients associated with each class"""
     # Construct weight by class DataFrame
-    weight_by_class = pd.DataFrame({'Class': classes,
-                                    'Weights': [np.median(trace['b'][:, x]) for x in range(len(classes))]})
-    weight_by_class = weight_by_class.sort_values('Weights', ascending=False)
+    weights = calculate_weights(classes, trace)
 
     plt.figure(figsize=(12, 4))
-    sns.barplot(data=weight_by_class, x='Class', y='Weights')
+    sns.barplot(data=weights, x='Class', y='Weights')
     plt.xticks(rotation=90)
     plt.title('Median Beta Coefficient Weight by Tissue for N-of-1 Sample')
     if output:
