@@ -12,6 +12,7 @@ from pymc3.backends.base import MultiTrace
 from pymc3.model import Model
 from sklearn.feature_selection import SelectKBest
 from sklearn.manifold import t_sne
+from tqdm import tqdm
 
 
 def run_model(sample: pd.Series,
@@ -101,7 +102,7 @@ def ppc_from_coefs(trace: MultiTrace,
 
     # Calculate posterior from linear model
     zs = {gene: np.zeros((500, len(background_df))) for gene in genes}
-    for i in range(num_samples):
+    for i in tqdm(range(num_samples), total=num_samples):
         z = trace['a'][i] + background_df[genes].mul([trace['b'][i, x] for x in code_vec], axis=0)
         for gene in z.columns:
             zs[gene][i, :] = np.random.laplace(loc=z[gene], scale=trace['eps'].mean())
@@ -109,19 +110,22 @@ def ppc_from_coefs(trace: MultiTrace,
     return zs
 
 
-def posterior_predictive_pval(sample: pd.Series, ppc: Dict[str, np.array]):
+def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]):
     pvals = {}
-    for gene in ppc:
+    for gene in tqdm(ppc):
         z_true = sample[gene]
         z = ppc[gene].ravel()
-        pvals[gene] = round(sum(z_true < z) / len(z), 5)
+        pvals[gene] = _ppp_one_gene(z_true, z)
     return pvals
 
 
+def _ppp_one_gene(z_true, z):
+    return round(sum(z_true < z) / len(z), 5)
+
+
 def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
-    pvals = posterior_predictive_pval(sample, ppc)[gene]
     z = ppc[gene].ravel()
-    pval = pvals[gene]
+    pval = _ppp_one_gene(sample[gene], z)
     # Plot
     if ax:
         ax.axvline(sample[gene], color='red', label='z-true')
