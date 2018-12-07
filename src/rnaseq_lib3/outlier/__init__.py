@@ -114,7 +114,7 @@ def posterior_predictive_pval(sample: pd.Series, ppc: Dict[str, np.array]):
     for gene in ppc:
         z_true = sample[gene]
         z = ppc[gene].ravel()
-        pvals[gene] = round(sum(z_true < z) / len(z), 2)
+        pvals[gene] = round(sum(z_true < z) / len(z), 5)
     return pvals
 
 
