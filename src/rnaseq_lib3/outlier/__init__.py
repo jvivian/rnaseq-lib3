@@ -137,31 +137,6 @@ def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
         sns.kdeplot(z, label='Linear-Equation')
 
 
-# TODO: Delete in favor of using above instead of sample_ppc?
-def posterior_pvalues(sample: pd.Series, trace: MultiTrace, model: Model, genes: List[str]) -> pd.DataFrame:
-    """
-    Calculates posterior pvalues from `pm.sample_ppc` for training genes against an n-of-1 sample
-
-    Args:
-        sample: n-of-1 sample to compare
-        trace: PyMC3 trace
-        model: PyMC3 model
-        genes: List of genes that were used in training
-
-    Returns:
-        DataFrame containing genes and pvalues
-    """
-    ppc = pm.sample_ppc(trace, model=model)
-    ppp = {}
-    # For each gene, calculate posterior estimate and calculate PPP
-    for gene in genes:
-        z = ppc[gene].ravel()
-        z_true = sample[gene]
-        ppp[gene] = sum(z_true < z) / len(z)
-
-    return pd.DataFrame({'gene': genes, 'pval': [ppp[g] for g in genes]}).sort_values('pval')
-
-
 def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col, n=50):
     k = SelectKBest(k=n)
     k.fit_transform(df[genes], df[class_col])
