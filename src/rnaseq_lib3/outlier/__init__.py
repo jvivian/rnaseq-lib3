@@ -17,7 +17,7 @@ from tqdm import tqdm
 
 def run_model(sample: pd.Series,
               background_df: pd.DataFrame,
-              class_col: str,
+              class_col: str = 'tissue',
               training_genes: List[str] = None,
               gene_pool: List[str] = None,
               n_genes: int = 50,
