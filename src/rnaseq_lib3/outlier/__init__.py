@@ -85,7 +85,7 @@ def ppc_from_coefs(trace: MultiTrace,
                    genes: List[str],
                    background_df: pd.DataFrame,
                    class_col: str,
-                   num_samples: int = 500):
+                   num_samples: int = None):
     """
     Draws posterior using the linear model coefficients
 
@@ -94,8 +94,10 @@ def ppc_from_coefs(trace: MultiTrace,
         genes: Gene of interest
         background_df: Background dataset of expression where index = Samples
         class_col: Column to use as class discriminator
-        num_samples: Number of sampling iterations
+        num_samples: Number of sampling iterations, defaults to get a total of ~1 mil samples in posterior
     """
+    num_samples = 1_000_000 // len(background_df) if num_samples is None else num_samples
+
     # Categorical code mapping
     codes = {cat: i for i, cat in enumerate(background_df[class_col].unique())}
     code_vec = [codes[x] for x in background_df[class_col]]
