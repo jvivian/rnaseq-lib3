@@ -103,7 +103,7 @@ def ppc_from_coefs(trace: MultiTrace,
     code_vec = [codes[x] for x in background_df[class_col]]
 
     # Calculate posterior from linear model
-    zs = {gene: np.zeros((500, len(background_df))) for gene in genes}
+    zs = {gene: np.zeros((num_samples, len(background_df))) for gene in genes}
     for i in tqdm(range(num_samples), total=num_samples):
         z = trace['a'][i] + background_df[genes].mul([trace['b'][i, x] for x in code_vec], axis=0)
         for gene in z.columns:
