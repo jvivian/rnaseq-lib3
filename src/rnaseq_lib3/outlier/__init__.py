@@ -1,4 +1,5 @@
 import pickle
+from collections import defaultdict
 from typing import List, Tuple, Dict
 
 import holoviews as hv
@@ -103,12 +104,13 @@ def ppc_from_coefs(trace: MultiTrace,
     code_vec = [codes[x] for x in background_df[class_col]]
 
     # Calculate posterior from linear model
-    zs = {gene: np.zeros((num_samples, len(background_df))) for gene in genes}
+    # To avoid .ravel() in ppc, and store in array, zs is now GENE by N, where N is all samples
+    zs = defaultdict(list)
+    sub = background_df[genes]
     for i in tqdm(range(num_samples), total=num_samples):
-        z = trace['a'][i] + background_df[genes].mul([trace['b'][i, x] for x in code_vec], axis=0)
-        for gene in z.columns:
-            zs[gene][i, :] = np.random.laplace(loc=z[gene], scale=trace['eps'].mean())
-
+        z = trace['a'][i] + sub.mul([trace['b'][i, x] for x in code_vec], axis=0)
+        for j, gene in enumerate(z.columns):
+            zs[gene].extend(np.random.laplace(loc=z[gene], scale=trace['eps'].mean()))
     return zs
 
 
@@ -116,13 +118,13 @@ def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]):
     pvals = {}
     for gene in tqdm(ppc):
         z_true = sample[gene]
-        z = ppc[gene].ravel()
+        z = ppc[gene]
         pvals[gene] = _ppp_one_gene(z_true, z)
     return pvals
 
 
 def _ppp_one_gene(z_true, z):
-    return round(sum(z_true < z) / len(z), 5)
+    return round(np.sum(z_true < z) / len(z), 5)
 
 
 def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
