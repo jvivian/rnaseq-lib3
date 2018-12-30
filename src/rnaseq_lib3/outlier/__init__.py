@@ -12,7 +12,7 @@ from pymc3.backends.base import MultiTrace
 from pymc3.model import Model
 from sklearn.feature_selection import SelectKBest
 from sklearn.manifold import t_sne
-from tqdm import tqdm
+from tqdm.autonotebook import tqdm
 
 
 def run_model(sample: pd.Series,
