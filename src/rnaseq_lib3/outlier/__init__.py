@@ -128,7 +128,7 @@ def _ppp_one_gene(z_true, z):
 
 
 def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
-    z = ppc[gene].ravel()
+    z = ppc[gene]
     pval = _ppp_one_gene(sample[gene], z)
     # Plot
     if ax:
