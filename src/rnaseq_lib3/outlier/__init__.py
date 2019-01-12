@@ -205,3 +205,24 @@ def dimensionality_reduction(sample: pd.Series,
     df[col] = background_df[col].tolist() + [f'N-of-1 - {sample[col]}']
     df['size'] = [1 for _ in background_df[col]] + [5]
     return df, hv.Scatter(data=df, kdims=['x'], vdims=['y', col, 'size'])
+
+
+def sample_by_group_pearsonr(sample: pd.Series, df: pd.DataFrame, genes: List[str], class_col: str) -> pd.DataFrame:
+    """
+    Return pearsonR of the sample against all groups in the `class_col`
+
+    Args:
+        sample: N-of-1 sample
+        df: background dataset
+        genes: genes to use when calculating PearsonR
+        class_col: column to use as class discriminator
+
+    Returns:
+        2-column DataFrame of pearsonR scores
+    """
+    rows = []
+    for group in df[class_col].unique():
+        sub = df[df[class_col] == group]
+        pr, pval = st.pearsonr(sample[genes], sub[genes].median())
+        rows.append([group, pr])
+    return pd.DataFrame(rows, columns=[class_col, 'PR']).sort_values('PR', ascending=False)
