@@ -1,5 +1,4 @@
 import pickle
-from collections import defaultdict
 from typing import List, Tuple, Dict
 
 import holoviews as hv
@@ -7,6 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import pymc3 as pm
+import scipy.stats as st
 import seaborn as sns
 import trimap
 from pymc3.backends.base import MultiTrace
