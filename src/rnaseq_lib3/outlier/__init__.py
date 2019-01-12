@@ -181,7 +181,7 @@ def dimensionality_reduction(sample: pd.Series,
                              background_df: pd.DataFrame,
                              genes: List[str],
                              col: str,
-                             method='trimap') -> hv.Scatter:
+                             method='trimap') -> Tuple[pd.DataFrame, hv.Scatter]:
     """
     Wrapper for returning trimap plot with column for `color_index` and `size_index`
 
@@ -204,4 +204,4 @@ def dimensionality_reduction(sample: pd.Series,
     df = pd.DataFrame(reduced, columns=['x', 'y'])
     df[col] = background_df[col].tolist() + [f'N-of-1 - {sample[col]}']
     df['size'] = [1 for _ in background_df[col]] + [5]
-    return hv.Scatter(data=df, kdims=['x'], vdims=['y', col, 'size'])
+    return df, hv.Scatter(data=df, kdims=['x'], vdims=['y', col, 'size'])
