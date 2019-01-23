@@ -9,109 +9,74 @@ import pymc3 as pm
 import scipy.stats as st
 import seaborn as sns
 import trimap
-from pymc3.backends.base import MultiTrace
-from pymc3.model import Model
 from sklearn.feature_selection import SelectKBest
 from sklearn.manifold import t_sne
+from sklearn.metrics import pairwise_distances
 from tqdm.autonotebook import tqdm
 
 
 def run_model(sample: pd.Series,
-              background_df: pd.DataFrame,
-              class_col: str = 'tissue',
-              training_genes: List[str] = None,
-              gene_pool: List[str] = None,
-              n_genes: int = 50,
-              beta_func=pm.Normal,
-              draws: int = 500,
-              tune: int = 1000,
-              n_chains: int = 4) -> Tuple[Model, MultiTrace]:
+                     df: pd.DataFrame,
+                     training_genes: List[str],
+                     class_col: str,
+                     **kwargs):
     """
-    Run Bayesian outlier model
+    Run Bayesian model by prefitting Y-distributions
 
     Args:
-        sample: N-of-1 sample to run   
-        background_df: Background dataframe to use in comparison
-        class_col: Column in background dataframe to use as categorical discriminator
+        sample: N-of-1 sample to run
+        df: Background dataframe to use in comparison
         training_genes: Genes to use during training
-        gene_pool: Set of genes
-        n_genes: Number of genes to use in training if not supplied via training_genes
-        beta_func: PyMC3 Distribution to use for beta function. Must accept mu and sd.
-        draws: Number of draws during sampling
-        tune: Sampling parameter
-        n_chains: Sampling parameter
+        class_col:
+        **kwargs:
 
     Returns:
         Model and Trace from PyMC3
     """
-    assert any([gene_pool, training_genes]), 'gene_pool or training_genes must be supplied'
+    classes = sorted(df[class_col].unique())
+    ncats = len(classes)
 
-    # Create categorical index
-    idx = background_df[class_col].astype('category').cat.codes
-    n_cats = len(background_df[class_col].unique())
-
-    # Identify gene set to train on
-    if not training_genes:
-        training_genes = select_k_best_genes(background_df, genes=gene_pool, class_col=class_col, n=n_genes)
-
-    # Define model and sample
     with pm.Model() as model:
-        # Alpha in linear model
+        # Linear model priors
         a = pm.Normal('a', mu=0, sd=10)
-
-        # If number of categories is 1, we don't need hyperpriors for b
-        if n_cats == 1:
-            b = beta_func('b', mu=0, sd=10, shape=1)
-        else:
-            mu_b = pm.Normal('mu_b', mu=0, sd=10)
-            sigma_b = pm.InverseGamma('sigma_b', 2.1, 1)
-            b = beta_func('b', mu=mu_b, sd=sigma_b, shape=n_cats)
-
-        # Linear model
-        mu = {}
-        for gene in training_genes:
-            mu[gene] = a + b[idx] * background_df[gene]
-
-        # Model estimation
+        b = pm.Dirichlet('b', a=np.ones(ncats))
+        # Model error
         eps = pm.InverseGamma('eps', 2.1, 1)
-        z = {}
-        for gene in training_genes:
-            z[gene] = pm.Laplace(gene, mu=mu[gene], b=eps, observed=sample[gene])
 
-        trace = pm.sample(draws=draws, tune=tune, n_chains=n_chains)
+        # Linear model declaration
+        for gene in tqdm(training_genes):
+            mu = a
+            for i, dataset in enumerate(classes):
+                cat_mu, cat_sd = st.norm.fit(df[df[class_col] == dataset][gene])
+                # Standard deviation can't be initialized to 0, so set to 0.1
+                cat_sd = 0.1 if cat_sd == 0 else cat_sd
+                name = f'{gene}-{dataset}'
+                y = pm.Normal(name, cat_mu, cat_sd)
+                mu += b[i] * y
+
+            # Embed mu in laplacian distribution
+            pm.Laplace(gene, mu=mu, b=eps, observed=sample[gene])
+        # Sample
+        trace = pm.sample(**kwargs)
     return model, trace
 
 
-def ppc_from_coefs(trace: MultiTrace,
-                   genes: List[str],
-                   background_df: pd.DataFrame,
-                   class_col: str,
-                   num_samples: int = None):
+def gene_ppc(trace, gene: str) -> np.array:
     """
-    Draws posterior using the linear model coefficients
+    Calculate PPC for a gene
 
     Args:
-        trace: Trace from PyMC3
-        genes: Gene of interest
-        background_df: Background dataset of expression where index = Samples
-        class_col: Column to use as class discriminator
-        num_samples: Number of sampling iterations, defaults to get a total of ~1 mil samples in posterior
+        trace: PyMC3 Trace
+        gene: Gene of interest
+
+    Returns:
+        Random variates representing PPC of the gene
     """
-    num_samples = 1_000_000 // len(background_df) if num_samples is None else num_samples
-
-    # Categorical code mapping
-    codes = {cat: i for i, cat in enumerate(background_df[class_col].unique())}
-    code_vec = [codes[x] for x in background_df[class_col]]
-
-    # Calculate posterior from linear model
-    df_len = len(background_df)
-    zs = {gene: np.zeros(df_len * num_samples) for gene in genes}
-    sub = background_df[genes]
-    for i in tqdm(range(num_samples), total=num_samples):
-        z = trace['a'][i] + sub.mul([trace['b'][i, x] for x in code_vec], axis=0)
-        for j, gene in enumerate(z.columns):
-            zs[gene][df_len * i: df_len * (i+1)] = np.random.laplace(loc=z[gene], scale=trace['eps'].mean())
-    return zs
+    y_gene = [x for x in trace.varnames if x.startswith(gene)]
+    b = trace['a']
+    for i, y_name in enumerate(y_gene):
+        b += trace['b'][:, i] * trace[y_name]
+    return np.random.laplace(loc=b, scale=trace['eps'])
 
 
 def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]):
