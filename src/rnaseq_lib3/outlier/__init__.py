@@ -18,7 +18,7 @@ from tqdm.autonotebook import tqdm
 def run_model(sample: pd.Series,
               df: pd.DataFrame,
               training_genes: List[str],
-              class_col: str,
+              class_col: str = 'tissue',
               **kwargs):
     """
     Run Bayesian model by prefitting Y-distributions
@@ -39,7 +39,7 @@ def run_model(sample: pd.Series,
     with pm.Model() as model:
         # Linear model priors
         a = pm.Normal('a', mu=0, sd=10)
-        b = pm.Dirichlet('b', a=np.ones(ncats))
+        b = [1] if ncats == 1 else pm.Dirichlet('b', a=np.ones(ncats))
         # Model error
         eps = pm.InverseGamma('eps', 2.1, 1)
 
@@ -106,7 +106,7 @@ def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
         sns.kdeplot(z, label='Linear-Equation')
 
 
-def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col, n=50):
+def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col='tissue', n=50):
     k = SelectKBest(k=n)
     k.fit_transform(df[genes], df[class_col])
     return [genes[i] for i in k.get_support(indices=True)]
