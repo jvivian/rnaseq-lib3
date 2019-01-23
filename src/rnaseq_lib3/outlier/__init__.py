@@ -16,10 +16,10 @@ from tqdm.autonotebook import tqdm
 
 
 def run_model(sample: pd.Series,
-                     df: pd.DataFrame,
-                     training_genes: List[str],
-                     class_col: str,
-                     **kwargs):
+              df: pd.DataFrame,
+              training_genes: List[str],
+              class_col: str,
+              **kwargs):
     """
     Run Bayesian model by prefitting Y-distributions
 
