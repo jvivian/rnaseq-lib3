@@ -186,12 +186,12 @@ def pairwise_distance_ranks(sample: pd.Series, df: pd.DataFrame, genes: List[str
     """
     dist = pairwise_distances(np.array(sample[genes]).reshape(1, -1), df[genes])
     dist = pd.DataFrame([dist.ravel(), df[group]]).T
-    dist.columns = ['Distance', 'Class']
+    dist.columns = ['Distance', 'Group']
     dist = dist.sort_values('Distance')
 
     # Pandas-FU
     dist = dist.reset_index(drop=True).reset_index()
-    return dist.groupby('Class').apply(lambda x: x['index'].sum() / len(x)).sort_values().reset_index(name='Rank-Count')
+    return dist.groupby('Group').apply(lambda x: x['index'].sum() / len(x)).sort_values().reset_index(name='Rank-Count')
 
 
 def sample_by_group_pearsonr(sample: pd.Series, df: pd.DataFrame, genes: List[str], class_col: str) -> pd.DataFrame:
