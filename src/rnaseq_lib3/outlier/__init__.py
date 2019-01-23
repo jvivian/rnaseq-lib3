@@ -36,6 +36,17 @@ def run_model(sample: pd.Series,
     classes = sorted(df[class_col].unique())
     df = df[[class_col] + training_genes]
 
+    # Collect fits
+    print('Collecting fits')
+    ys = {}
+    for gene in tqdm(training_genes):
+        for i, dataset in enumerate(classes):
+            cat_mu, cat_sd = st.norm.fit(df[df[class_col] == dataset][gene])
+            # Standard deviation can't be initialized to 0, so set to 0.1
+            cat_sd = 0.1 if cat_sd == 0 else cat_sd
+            ys[f'{gene}-{dataset}'] = (cat_mu, cat_sd)
+
+    print('Building model')
     with pm.Model() as model:
         # Linear model priors
         a = pm.Normal('a', mu=0, sd=10)
@@ -45,14 +56,10 @@ def run_model(sample: pd.Series,
 
         # Linear model declaration
         for gene in tqdm(training_genes):
-            sub = df[[class_col, gene]]
             mu = a
             for i, dataset in enumerate(classes):
-                cat_mu, cat_sd = st.norm.fit(sub[sub[class_col] == dataset][gene])
-                # Standard deviation can't be initialized to 0, so set to 0.1
-                cat_sd = 0.1 if cat_sd == 0 else cat_sd
                 name = f'{gene}-{dataset}'
-                y = pm.Normal(name, cat_mu, cat_sd)
+                y = pm.Normal(name, *ys[name])
                 mu += b[i] * y
 
             # Embed mu in laplacian distribution
