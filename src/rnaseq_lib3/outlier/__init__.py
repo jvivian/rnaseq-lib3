@@ -207,6 +207,28 @@ def dimensionality_reduction(sample: pd.Series,
     return df, hv.Scatter(data=df, kdims=['x'], vdims=['y', col, 'size'])
 
 
+def pairwise_distance_ranks(sample: pd.Series, df: pd.DataFrame, genes: List[str], group: str):
+    """
+    Calculate pairwise distance, rank, and normalize by group counts
+    Args:
+        sample: n-of-1 sample. Gets own label
+        df: background dataset
+        genes: genes to use for pairwise distance
+        group: Column to use as class discriminator
+
+    Returns:
+        DataFrame of pairwise distance ranks
+    """
+    dist = pairwise_distances(np.array(sample[genes]).reshape(1, -1), df[genes])
+    dist = pd.DataFrame([dist.ravel(), df[group]]).T
+    dist.columns = ['Distance', 'Class']
+    dist = dist.sort_values('Distance')
+
+    # Pandas-FU
+    dist = dist.reset_index(drop=True).reset_index()
+    return dist.groupby('Class').apply(lambda x: x['index'].sum() / len(x)).sort_values().reset_index(name='Rank-Count')
+
+
 def sample_by_group_pearsonr(sample: pd.Series, df: pd.DataFrame, genes: List[str], class_col: str) -> pd.DataFrame:
     """
     Return pearsonR of the sample against all groups in the `class_col`
