@@ -34,12 +34,12 @@ def run_model(sample: pd.Series,
         Model and Trace from PyMC3
     """
     classes = sorted(df[class_col].unique())
-    ncats = len(classes)
+    df = df[[class_col] + training_genes]
 
     with pm.Model() as model:
         # Linear model priors
         a = pm.Normal('a', mu=0, sd=10)
-        b = [1] if ncats == 1 else pm.Dirichlet('b', a=np.ones(ncats))
+        b = [1] if len(classes) == 1 else pm.Dirichlet('b', a=np.ones(len(classes)))
         # Model error
         eps = pm.InverseGamma('eps', 2.1, 1)
 
