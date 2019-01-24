@@ -54,6 +54,7 @@ def run_model(sample: pd.Series,
         # Model error
         eps = pm.InverseGamma('eps', 2.1, 1)
 
+        # TODO: Try tt.stack to declare mu more intelligently via b * y
         # Linear model declaration
         for gene in tqdm(training_genes):
             mu = a
@@ -69,9 +70,26 @@ def run_model(sample: pd.Series,
     return model, trace
 
 
-def gene_ppc(trace, gene: str) -> np.array:
+def ppc(trace, genes: List[str]) -> Dict[str, np.array]:
     """
-    Calculate PPC for a gene
+    Posterior predictive check for a list of genes trained in the model
+
+    Args:
+        trace: PyMC3 trace
+        genes: List of genes of interest
+
+    Returns:
+
+    """
+    d = {}
+    for gene in tqdm(genes):
+        d[gene] = _gene_ppc(trace, gene)
+    return d
+
+
+def _gene_ppc(trace, gene: str) -> np.array:
+    """
+    Calculate posterior predictive for a gene
 
     Args:
         trace: PyMC3 Trace
@@ -80,7 +98,7 @@ def gene_ppc(trace, gene: str) -> np.array:
     Returns:
         Random variates representing PPC of the gene
     """
-    y_gene = [x for x in trace.varnames if x.startswith(gene)]
+    y_gene = [x for x in trace.varnames if x.startswith(f'{gene}-')]
     b = trace['a']
     for i, y_name in enumerate(y_gene):
         b += trace['b'][:, i] * trace[y_name]
