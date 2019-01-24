@@ -105,13 +105,13 @@ def _gene_ppc(trace, gene: str) -> np.array:
     return np.random.laplace(loc=b, scale=trace['eps'])
 
 
-def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]):
+def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> pd.Series:
     pvals = {}
     for gene in tqdm(ppc):
         z_true = sample[gene]
         z = ppc[gene]
         pvals[gene] = _ppp_one_gene(z_true, z)
-    return pvals
+    return pd.Series(pvals).sort_values()
 
 
 def _ppp_one_gene(z_true, z):
