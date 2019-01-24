@@ -138,12 +138,12 @@ def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col='tissue', 
     return [genes[i] for i in k.get_support(indices=True)]
 
 
-def _pickle(model_name, model, trace):
+def pickle_model(model_name, model, trace):
     with open(model_name, 'wb') as buff:
         pickle.dump({'model': model, 'trace': trace}, buff)
 
 
-def _load_pickle(pkl_path):
+def load_model(pkl_path):
     with open(pkl_path, 'rb') as buff:
         data = pickle.load(buff)
     return data['model'], data['trace']
