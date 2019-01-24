@@ -49,7 +49,7 @@ def run_model(sample: pd.Series,
     print('Building model')
     with pm.Model() as model:
         # Linear model priors
-        a = pm.Normal('a', mu=0, sd=10)
+        a = pm.Normal('a', mu=0, sd=1)
         b = [1] if len(classes) == 1 else pm.Dirichlet('b', a=np.ones(len(classes)))
         # Model error
         eps = pm.InverseGamma('eps', 2.1, 1)
