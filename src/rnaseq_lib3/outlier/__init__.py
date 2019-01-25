@@ -149,9 +149,13 @@ def load_model(pkl_path):
 
 
 def calculate_weights(classes, trace):
-    weight_by_class = pd.DataFrame({'Class': classes,
-                                    'Weights': [np.median(trace['b'][:, x]) for x in range(len(classes))]})
-    return weight_by_class.sort_values('Weights', ascending=False)
+    class_col = []
+    for c in classes:
+        class_col.extend([c for _ in range(len(trace['a']))])
+
+    weight_by_class = pd.DataFrame({'Class': class_col,
+                                    'Weights': np.array([trace['b'][:, x] for x in range(len(classes))]).ravel()})
+    return weight_by_class
 
 
 def plot_weights(classes, trace, output: str = None):
@@ -160,7 +164,7 @@ def plot_weights(classes, trace, output: str = None):
     weights = calculate_weights(classes, trace)
 
     plt.figure(figsize=(12, 4))
-    sns.barplot(data=weights, x='Class', y='Weights')
+    sns.boxplot(data=weights, x='Class', y='Weights')
     plt.xticks(rotation=90)
     plt.title('Median Beta Coefficient Weight by Tissue for N-of-1 Sample')
     if output:
