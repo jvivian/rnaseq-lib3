@@ -21,7 +21,7 @@ def run_model(sample: pd.Series,
               class_col: str = 'tissue',
               **kwargs):
     """
-    Run Bayesian model by prefitting Y-distributions
+    Run Bayesian model using prefit Y's for each Gene and Dataset distribution
 
     Args:
         sample: N-of-1 sample to run
@@ -37,9 +37,8 @@ def run_model(sample: pd.Series,
     df = df[[class_col] + training_genes]
 
     # Collect fits
-    print('Collecting fits')
     ys = {}
-    for gene in tqdm(training_genes):
+    for gene in training_genes:
         for i, dataset in enumerate(classes):
             cat_mu, cat_sd = st.norm.fit(df[df[class_col] == dataset][gene])
             # Standard deviation can't be initialized to 0, so set to 0.1
@@ -82,7 +81,7 @@ def ppc(trace, genes: List[str]) -> Dict[str, np.array]:
 
     """
     d = {}
-    for gene in tqdm(genes):
+    for gene in genes:
         d[gene] = _gene_ppc(trace, gene)
     return d
 
@@ -107,7 +106,7 @@ def _gene_ppc(trace, gene: str) -> np.array:
 
 def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> pd.Series:
     pvals = {}
-    for gene in tqdm(ppc):
+    for gene in ppc:
         z_true = sample[gene]
         z = ppc[gene]
         pvals[gene] = _ppp_one_gene(z_true, z)
