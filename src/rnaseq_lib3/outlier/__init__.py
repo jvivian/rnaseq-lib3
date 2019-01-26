@@ -203,7 +203,8 @@ def dimensionality_reduction(sample: pd.Series,
 
 def pairwise_distance_ranks(sample: pd.Series, df: pd.DataFrame, genes: List[str], group: str):
     """
-    Calculate pairwise distance, rank, and normalize by group counts
+    Calculate pairwise distance, rank, and take group median
+
     Args:
         sample: n-of-1 sample. Gets own label
         df: background dataset
@@ -220,7 +221,7 @@ def pairwise_distance_ranks(sample: pd.Series, df: pd.DataFrame, genes: List[str
 
     # Pandas-FU
     dist = dist.reset_index(drop=True).reset_index()
-    return dist.groupby('Group').apply(lambda x: x['index'].sum() / len(x)).sort_values().reset_index(name='Rank-Count')
+    return dist.groupby('Group').apply(lambda x: x['index'].median()).sort_values().reset_index(name='MedianRank')
 
 
 def sample_by_group_pearsonr(sample: pd.Series, df: pd.DataFrame, genes: List[str], class_col: str) -> pd.DataFrame:
