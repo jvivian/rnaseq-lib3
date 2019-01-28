@@ -1,4 +1,5 @@
 import rnaseq_lib3.aws
+import rnaseq_lib3.bam
 import rnaseq_lib3.deseq2
 import rnaseq_lib3.docker
 import rnaseq_lib3.exp
