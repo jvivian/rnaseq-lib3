@@ -35,7 +35,7 @@ def convert_bam_to_fastq(bam_path: str, ignore_validation_errors: bool = True) -
     Convert BAM to FASTQ pair
 
     Args:
-        bam_path: Path to BAM
+        bam_path: Full path to BAM
         ignore_validation_errors: Flag to ignore validation errors in picardtools
 
     Returns:
