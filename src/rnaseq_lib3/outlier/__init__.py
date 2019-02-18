@@ -9,7 +9,7 @@ import pymc3 as pm
 import scipy.stats as st
 import seaborn as sns
 import trimap
-from sklearn.feature_selection import SelectKBest
+from sklearn.feature_selection import SelectKBest, chi2, f_classif
 from sklearn.manifold import t_sne
 from sklearn.metrics import pairwise_distances
 from tqdm.autonotebook import tqdm
@@ -142,9 +142,25 @@ def plot_gene_ppc(sample: pd.Series, ppc: Dict[str, np.array], gene, ax=None):
         sns.kdeplot(z, label='Linear-Equation')
 
 
-def select_k_best_genes(df: pd.DataFrame, genes: List[str], class_col='tissue', n=50):
-    k = SelectKBest(k=n)
-    k.fit_transform(df[genes], df[class_col])
+def select_k_best_genes(df: pd.DataFrame, genes: List[str], group='tissue', n=50, method='f_classif') -> List[str]:
+    """
+    Selects K genes based on ANOVA f-value or chi2
+
+    Args:
+        df: Background dataframe to use in comparison
+        genes: Genes to use in selection
+        group: Column to use to select group
+        n: Number of genes (K)
+        method: Method for gene selection
+
+    Returns:
+        List of selected genes
+    """
+    if method == 'f_classif':
+        k = SelectKBest(f_classif, k=n)
+    else:
+        k = SelectKBest(chi2, k=n)
+    k.fit_transform(df[genes], df[group])
     return [genes[i] for i in k.get_support(indices=True)]
 
 
