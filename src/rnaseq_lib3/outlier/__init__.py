@@ -43,7 +43,7 @@ def run_model(sample: pd.Series,
             cat_mu, cat_sd = st.norm.fit(df[df[group] == dataset][gene])
             # Standard deviation can't be initialized to 0, so set to 0.1
             cat_sd = 0.1 if cat_sd == 0 else cat_sd
-            ys[f'{gene}-{dataset}'] = (cat_mu, cat_sd)
+            ys[f'{gene}={dataset}'] = (cat_mu, cat_sd)
 
     print('Building model')
     with pm.Model() as model:
