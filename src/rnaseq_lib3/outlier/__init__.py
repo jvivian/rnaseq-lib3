@@ -58,7 +58,7 @@ def run_model(sample: pd.Series,
         for gene in tqdm(training_genes):
             mu = a
             for i, dataset in enumerate(classes):
-                name = f'{gene}-{dataset}'
+                name = f'{gene}={dataset}'
                 y = pm.Normal(name, *ys[name])
                 mu += b[i] * y
 
@@ -97,7 +97,7 @@ def _gene_ppc(trace, gene: str) -> np.array:
     Returns:
         Random variates representing PPC of the gene
     """
-    y_gene = [x for x in trace.varnames if x.startswith(f'{gene}-')]
+    y_gene = [x for x in trace.varnames if x.startswith(f'{gene}=')]
     b = trace['a']
     for i, y_name in enumerate(y_gene):
         b += trace['b'][:, i] * trace[y_name]
