@@ -9,12 +9,12 @@ from pandas import DataFrame
 from rnaseq_lib3.exp import sample_counts_df
 
 
-def regression_plot(df: DataFrame,
-                    x_val: str,
-                    y_val: str,
-                    vdims: List[str] = None,
-                    ci: int = 95,
-                    title: str = None) -> hv.NdOverlay:
+def regression(df: DataFrame,
+               x_val: str,
+               y_val: str,
+               vdims: List[str] = None,
+               ci: int = 95,
+               title: str = None) -> hv.NdOverlay:
     """
     Seaborn's regplot implemented in Holoviews
 
