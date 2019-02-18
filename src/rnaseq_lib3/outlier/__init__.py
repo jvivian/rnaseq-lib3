@@ -18,7 +18,7 @@ from tqdm.autonotebook import tqdm
 def run_model(sample: pd.Series,
               df: pd.DataFrame,
               training_genes: List[str],
-              class_col: str = 'tissue',
+              group: str = 'tissue',
               **kwargs):
     """
     Run Bayesian model using prefit Y's for each Gene and Dataset distribution
@@ -27,20 +27,20 @@ def run_model(sample: pd.Series,
         sample: N-of-1 sample to run
         df: Background dataframe to use in comparison
         training_genes: Genes to use during training
-        class_col:
+        group: Column to use to distinguish different groups
         **kwargs:
 
     Returns:
         Model and Trace from PyMC3
     """
-    classes = sorted(df[class_col].unique())
-    df = df[[class_col] + training_genes]
+    classes = sorted(df[group].unique())
+    df = df[[group] + training_genes]
 
     # Collect fits
     ys = {}
     for gene in training_genes:
         for i, dataset in enumerate(classes):
-            cat_mu, cat_sd = st.norm.fit(df[df[class_col] == dataset][gene])
+            cat_mu, cat_sd = st.norm.fit(df[df[group] == dataset][gene])
             # Standard deviation can't be initialized to 0, so set to 0.1
             cat_sd = 0.1 if cat_sd == 0 else cat_sd
             ys[f'{gene}-{dataset}'] = (cat_mu, cat_sd)
@@ -78,7 +78,7 @@ def ppc(trace, genes: List[str]) -> Dict[str, np.array]:
         genes: List of genes of interest
 
     Returns:
-
+        Returns dictionary mapping gene to samples
     """
     d = {}
     for gene in genes:
@@ -105,6 +105,16 @@ def _gene_ppc(trace, gene: str) -> np.array:
 
 
 def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> pd.Series:
+    """
+    Calculates posterior predictive p-values from PPC sampling and corresponding sample
+
+    Args:
+        sample: N-of-1 sample
+        ppc: Dictionary mapping gene to posterior predictive check sampling
+
+    Returns:
+        Returns vector of genes and corresponding p-value
+    """
     pvals = {}
     for gene in ppc:
         z_true = sample[gene]
@@ -114,6 +124,7 @@ def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> p
 
 
 def _ppp_one_gene(z_true, z):
+    """Calculates posterior predictive p-value for single gene"""
     return round(np.sum(z_true < z) / len(z), 5)
 
 
