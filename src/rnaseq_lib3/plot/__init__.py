@@ -61,7 +61,7 @@ def _fit_fast(grid: np.array, x: str, y: str):
     return yhat, yhat_boots
 
 
-def sample_counts(df: DataFrame, groupby: str = 'tissue', title: str = None) -> Bars:
+def sample_counts(df: DataFrame, groupby: str = 'tissue', title: str = None, show_labels: bool = False) -> Bars:
     """Bar graph of tissues or subtypes grouped by dataset"""
 
     # Convert dataframe
@@ -78,5 +78,6 @@ def sample_counts(df: DataFrame, groupby: str = 'tissue', title: str = None) -> 
                                   'style': dict(alpha=0.25, hover_alpha=0.75)}}
 
     # Return Bars object of sample counts
-    return hv.Bars(counts, kdims=[tissue_dim, label_dim], vdims=[count_dim],
-                   label=title).opts(sample_count_opts)
+    title = 'Sample Counts' if None else title
+    kdims = [tissue_dim, label_dim] if show_labels else [tissue_dim]
+    return hv.Bars(counts, kdims=kdims, vdims=[count_dim], label=title).opts(sample_count_opts)
