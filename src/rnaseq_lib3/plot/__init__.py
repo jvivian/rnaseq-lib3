@@ -78,6 +78,6 @@ def sample_counts(df: DataFrame, groupby: str = 'tissue', title: str = None, sho
                                   'style': dict(alpha=0.25, hover_alpha=0.75)}}
 
     # Return Bars object of sample counts
-    title = 'Sample Counts' if None else title
+    title = 'Sample Counts' if title is None else title
     kdims = [tissue_dim, label_dim] if show_labels else [tissue_dim]
     return hv.Bars(counts, kdims=kdims, vdims=[count_dim], label=title).opts(sample_count_opts)
