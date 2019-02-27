@@ -99,8 +99,14 @@ def _gene_ppc(trace, gene: str) -> np.array:
     """
     y_gene = [x for x in trace.varnames if x.startswith(f'{gene}=')]
     b = trace['a']
-    for i, y_name in enumerate(y_gene):
-        b += trace['b'][:, i] * trace[y_name]
+    if 'b' in trace.varnames:
+        for i, y_name in enumerate(y_gene):
+            b += trace['b'][:, i] * trace[y_name]
+
+    # If no 'b' in trace.varnames then there was only one comparison group
+    else:
+        for i, y_name in enumerate(y_gene):
+            b += 1 * trace[y_name]
     return np.random.laplace(loc=b, scale=trace['eps'])
 
 
