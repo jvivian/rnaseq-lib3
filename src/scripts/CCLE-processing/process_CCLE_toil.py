@@ -232,6 +232,5 @@ def main():
             toil.restart()
 
 
-
 if __name__ == '__main__':
     main()
