@@ -37,7 +37,7 @@ def regression(df: DataFrame,
     ci = sns.utils.ci(yhat_boots, which=ci, axis=0)
     # Define plot Elements
     vdims = [y_val] + vdims if vdims else [y_val]
-    scatter = hv.Scatter(data=df, kdims=['P-value'], vdims=vdims).options(tools=['hover'], width=700, height=300,
+    scatter = hv.Scatter(data=df, kdims=[x_val], vdims=vdims).options(tools=['hover'], width=700, height=300,
                                                                           color='blue', size=5, alpha=0.50)
     regline = hv.Curve((grid, yhat)).options(color='red')
     lower = hv.Area((grid, yhat, ci[0]), vdims=['y', 'y2']).options(color='red', alpha=0.15)
