@@ -124,7 +124,7 @@ def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> p
     pvals = {}
     for gene in ppc:
         z_true = sample[gene]
-        z = ppc[gene]
+        z = st.laplace.rvs(*st.laplace.fit(ppc[gene]), size=100_000)
         pvals[gene] = _ppp_one_gene(z_true, z)
     return pd.Series(pvals).sort_values()
 
