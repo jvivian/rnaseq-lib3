@@ -38,7 +38,7 @@ def regression(df: DataFrame,
     # Define plot Elements
     vdims = [y_val] + vdims if vdims else [y_val]
     scatter = hv.Scatter(data=df, kdims=[x_val], vdims=vdims).options(tools=['hover'], width=700, height=300,
-                                                                          color='blue', size=5, alpha=0.50)
+                                                                      color='blue', size=5, alpha=0.50)
     regline = hv.Curve((grid, yhat)).options(color='red')
     lower = hv.Area((grid, yhat, ci[0]), vdims=['y', 'y2']).options(color='red', alpha=0.15)
     upper = hv.Area((grid, yhat, ci[1]), vdims=['y', 'y2']).options(color='red', alpha=0.15)
