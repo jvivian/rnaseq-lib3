@@ -107,7 +107,9 @@ def _gene_ppc(trace, gene: str) -> np.array:
     else:
         for i, y_name in enumerate(y_gene):
             b += 1 * trace[y_name]
-    return np.random.laplace(loc=b, scale=trace['eps'])
+
+    # Sample 100,000 times from fit to return PPC
+    return st.laplace.rvs(*st.laplace.fit(loc=b, scale=trace['eps']), size=100_000)
 
 
 def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> pd.Series:
@@ -124,7 +126,7 @@ def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> p
     pvals = {}
     for gene in ppc:
         z_true = sample[gene]
-        z = st.laplace.rvs(*st.laplace.fit(ppc[gene]), size=100_000)
+        z = ppc[gene]
         pvals[gene] = _ppp_one_gene(z_true, z)
     return pd.Series(pvals).sort_values()
 
