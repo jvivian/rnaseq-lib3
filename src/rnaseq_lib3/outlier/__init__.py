@@ -14,6 +14,8 @@ from sklearn.manifold import t_sne
 from sklearn.metrics import pairwise_distances
 from tqdm.autonotebook import tqdm
 
+import umap
+
 
 def run_model(sample: pd.Series,
               df: pd.DataFrame,
@@ -236,6 +238,43 @@ def dimensionality_reduction(sample: pd.Series,
     return df, hv.Scatter(data=df, kdims=['x'], vdims=['y', col, 'size'])
 
 
+def umap_distances(sample: pd.Series, df: pd.DataFrame, genes: List[str], group: str):
+    """
+    Run UMAP to create an embedding of the sample and background dataset, then calculate distance to each
+    group via pairwise distance
+
+    Args:
+        sample: n-of-1 sample. Gets own label
+        df: background dataset
+        genes: genes to use for pairwise distance
+        group: Column to use as class discriminator
+
+    Returns:
+        DataFrame of UMAP pairwise distances
+    """
+    # Concatenate sample to background
+    concat = df.append(sample)
+    concat.tail(2)
+
+    # UMAP embedding
+    embedding = pd.DataFrame(umap.UMAP().fit_transform(concat[genes]), columns=['UMAP1', 'UMAP2'])
+    embedding[group] = concat[group].values
+
+    # Separate sample and background
+    sample = embedding.iloc[-1]
+    df = embedding.iloc[:-1]
+
+    # Pairwise distances
+    dist = pairwise_distances(np.array(sample[['UMAP1', 'UMAP2']]).reshape(1, -1), df[['UMAP1', 'UMAP2']])
+    dist = pd.DataFrame([dist.ravel(), df[group]]).T
+    dist.columns = ['Distance', 'Group']
+
+    # Median by group and sort
+    med_dist = dist.groupby('Group').apply(lambda x: x['Distance'].median()).reset_index()
+    med_dist.columns = ['Group', 'MedianDistance']
+    return med_dist.sort_values('MedianDistance').reset_index(drop=True)
+
+
 def pairwise_distance_ranks(sample: pd.Series, df: pd.DataFrame, genes: List[str], group: str):
     """
     Calculate pairwise distance, rank, and take group median
@@ -249,14 +288,15 @@ def pairwise_distance_ranks(sample: pd.Series, df: pd.DataFrame, genes: List[str
     Returns:
         DataFrame of pairwise distance ranks
     """
+    # Calculate pairwise distance for each sample and associate with their group label
     dist = pairwise_distances(np.array(sample[genes]).reshape(1, -1), df[genes])
     dist = pd.DataFrame([dist.ravel(), df[group]]).T
     dist.columns = ['Distance', 'Group']
-    dist = dist.sort_values('Distance')
 
-    # Pandas-FU
-    dist = dist.reset_index(drop=True).reset_index()
-    return dist.groupby('Group').apply(lambda x: x['index'].median()).sort_values().reset_index(name='MedianRank')
+    # Take distance median for each group and sort
+    med_dist = dist.groupby('Group').apply(lambda x: x['Distance'].median()).reset_index()
+    med_dist.columns = ['Group', 'MedianDistance']
+    return med_dist.sort_values('MedianDistance').reset_index(drop=True)
 
 
 def sample_by_group_pearsonr(sample: pd.Series, df: pd.DataFrame, genes: List[str], class_col: str) -> pd.DataFrame:
