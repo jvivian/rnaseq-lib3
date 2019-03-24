@@ -9,12 +9,11 @@ import pymc3 as pm
 import scipy.stats as st
 import seaborn as sns
 import trimap
+import umap
 from sklearn.feature_selection import SelectKBest, chi2, f_classif
 from sklearn.manifold import t_sne
 from sklearn.metrics import pairwise_distances
 from tqdm.autonotebook import tqdm
-
-import umap
 
 
 def run_model(sample: pd.Series,
