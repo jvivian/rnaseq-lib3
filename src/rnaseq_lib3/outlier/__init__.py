@@ -110,7 +110,8 @@ def _gene_ppc(trace, gene: str) -> np.array:
             b += 1 * trace[y_name]
 
     # Sample 100,000 times from fit to return PPC
-    return st.laplace.rvs(*st.laplace.fit(loc=b, scale=trace['eps']), size=100_000)
+    ppc = st.laplace.rvs(loc = b, scale = trace['eps'])
+    return st.laplace.rvs(*st.laplace.fit(ppc), size=100_000)
 
 
 def posterior_predictive_pvals(sample: pd.Series, ppc: Dict[str, np.array]) -> pd.Series:
