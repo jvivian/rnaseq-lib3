@@ -10,6 +10,7 @@ import scipy.stats as st
 import seaborn as sns
 import trimap
 import umap
+from sklearn.decomposition import PCA
 from sklearn.feature_selection import SelectKBest, chi2, f_classif
 from sklearn.manifold import t_sne
 from sklearn.metrics import pairwise_distances
@@ -110,7 +111,7 @@ def _gene_ppc(trace, gene: str) -> np.array:
             b += 1 * trace[y_name]
 
     # Sample 100,000 times from fit to return PPC
-    ppc = st.laplace.rvs(loc = b, scale = trace['eps'])
+    ppc = st.laplace.rvs(loc=b, scale=trace['eps'])
     return st.laplace.rvs(*st.laplace.fit(ppc), size=100_000)
 
 
@@ -254,7 +255,6 @@ def umap_distances(sample: pd.Series, df: pd.DataFrame, genes: List[str], group:
     """
     # Concatenate sample to background
     concat = df.append(sample)
-    concat.tail(2)
 
     # UMAP embedding
     embedding = pd.DataFrame(umap.UMAP().fit_transform(concat[genes]), columns=['UMAP1', 'UMAP2'])
@@ -266,6 +266,44 @@ def umap_distances(sample: pd.Series, df: pd.DataFrame, genes: List[str], group:
 
     # Pairwise distances
     dist = pairwise_distances(np.array(sample[['UMAP1', 'UMAP2']]).reshape(1, -1), df[['UMAP1', 'UMAP2']])
+    dist = pd.DataFrame([dist.ravel(), df[group]]).T
+    dist.columns = ['Distance', 'Group']
+
+    # Median by group and sort
+    med_dist = dist.groupby('Group').apply(lambda x: x['Distance'].median()).reset_index()
+    med_dist.columns = ['Group', 'MedianDistance']
+    return med_dist.sort_values('MedianDistance').reset_index(drop=True)
+
+
+def pca_distances(sample, df, genes, group, n_components=25):
+    """
+    Runs PCA to create an embedding of the sample and background dataset, then calculates distance to each
+    group via pairwise distance
+
+    Args:
+        sample: n-of-1 sample. Gets own label
+        df: background dataset
+        genes: genes to use for pairwise distance
+        group: Column to use as class discriminator
+        n_components: Number of components to use in PCA. 25 is the inflection point for GTEx
+
+    Returns:
+        DataFrame of pairwise distances
+    """
+    # Concatenate sample to background
+    concat = df.append(sample)
+
+    # PCA embedding
+    embedding = pd.DataFrame(PCA(n_components=n_components).fit_transform(concat[genes]))
+    embedding[group] = concat[group].values
+    components = list(embedding.columns[:-1])
+
+    # Separate sample and background
+    sample = embedding.iloc[-1]
+    df = embedding.iloc[:-1]
+
+    # Pairwise distances
+    dist = pairwise_distances(np.array(sample[components]).reshape(1, -1), df[components])
     dist = pd.DataFrame([dist.ravel(), df[group]]).T
     dist.columns = ['Distance', 'Group']
 
