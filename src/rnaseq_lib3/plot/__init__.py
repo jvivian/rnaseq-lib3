@@ -10,8 +10,8 @@ from rnaseq_lib3.exp import sample_counts_df
 
 
 def regression(df: DataFrame,
-               x_val: str,
-               y_val: str,
+               x: str,
+               y: str,
                vdims: List[str] = None,
                ci: int = 95,
                title: str = None) -> hv.NdOverlay:
