@@ -1,4 +1,5 @@
-from typing import Union, List, Tuple
+from itertools import combinations
+from typing import Union, List, Tuple, Set, Dict
 
 import numpy as np
 from pandas import DataFrame
@@ -106,3 +107,44 @@ def find_gaussian_intersection(m1, m2, std1, std2):
         return roots
     else:
         return inter
+
+
+def mutually_exclusive_set_counts(
+        sets: Dict[str, Set[str]],
+        groups: List[str] = None) -> Set[List[Set[str]], List[int]]:
+    """
+    Given a dictionary of sets, computes the mutually exclusive set intersection counts
+
+    Args:
+        sets: Dictionary of sets
+        groups: Optional set of keys to subset from set dictionary
+
+    Returns:
+        Memberships and their associated counts
+    """
+    # Collect master set
+    groups = sets.keys() if groups is None else groups
+    master = set()
+    for g in groups:
+        for s in sets[g]:
+            master.add(s)
+
+    combs = []
+    counts = []
+    # For decreasing set sizes, identify if outlier belongs to group
+    for i in range(len(groups), 0, -1):
+        for combination in combinations(groups, i):
+            count = 0
+            combs.append(combination)
+            print(combination)
+            inter = set.intersection(*[sets[x] for x in combination])
+
+            # Iterate over master and pop items if they belong to group
+            for item in list(master):
+                if item in inter:
+                    count += 1
+                    master.remove(item)
+
+            print(count)
+            counts.append(count)
+    return combs, counts
