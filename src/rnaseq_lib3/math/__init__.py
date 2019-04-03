@@ -136,7 +136,6 @@ def mutually_exclusive_set_counts(
         for combination in combinations(groups, i):
             count = 0
             combs.append(combination)
-            print(combination)
             inter = set.intersection(*[sets[x] for x in combination])
 
             # Iterate over master and pop items if they belong to group
@@ -145,6 +144,5 @@ def mutually_exclusive_set_counts(
                     count += 1
                     master.remove(item)
 
-            print(count)
             counts.append(count)
     return combs, counts
