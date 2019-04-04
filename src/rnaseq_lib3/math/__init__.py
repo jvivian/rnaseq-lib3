@@ -111,7 +111,7 @@ def find_gaussian_intersection(m1, m2, std1, std2):
 
 def mutually_exclusive_set_counts(
         sets: Dict[str, Set[str]],
-        groups: List[str] = None) -> Set[List[Set[str]], List[int]]:
+        groups: List[str] = None):
     """
     Given a dictionary of sets, computes the mutually exclusive set intersection counts
 
