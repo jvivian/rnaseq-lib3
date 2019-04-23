@@ -79,7 +79,8 @@ def ccollect(src: str, dest: str, is_dir: bool = False) -> None:
 
 def split_copy(src: str, dest: str) -> None:
     """
-    Splits src into N number of files and send one to each remote destinations
+    Splits src into N number of files and sends one to each remote destination
+    using the input src name
 
     Args:
         src: Path to source file
