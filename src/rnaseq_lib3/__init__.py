@@ -14,3 +14,4 @@ import rnaseq_lib3.sra
 import rnaseq_lib3.synapse
 import rnaseq_lib3.tcga
 import rnaseq_lib3.utils
+import rnaseq_lib3.openstack
