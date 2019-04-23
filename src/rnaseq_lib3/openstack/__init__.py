@@ -28,7 +28,7 @@ def ccall(cmd: str) -> None:
     parallel_popen(commands)
 
 
-def scall(cmd: str, screen_name: str = None):
+def scall(cmd: str, screen_name: str = None) -> None:
     """
     Screen CALL. Same as ccall but runs in a background screen.
     The screen exits upon the process terminating
@@ -44,7 +44,7 @@ def scall(cmd: str, screen_name: str = None):
     ccall(command)
 
 
-def ccopy(src, dest):
+def ccopy(src: str, dest: str) -> None:
     """
     Cluster COPY. Copies file from src to all destinations
 
@@ -63,20 +63,21 @@ def ccopy(src, dest):
     parallel_popen(commands)
 
 
-def ccollect(src, dest, is_dir=False):
+def ccollect(src: str, dest: str, is_dir: bool = False) -> None:
     """
     Cluster COLLECT. Collects files from all srcs to local destination
 
     Args:
         src: Full path to remote source
         dest: Local destination
+        is_dir: Whether or not the remote src is a directory
     """
     base = 'scp -r' if is_dir else 'scp'
     commands = [f'{base} {USER}@{ip}:{src} {dest}' for ip in IPS]
     parallel_popen(commands)
 
 
-def split_copy(src, dest):
+def split_copy(src: str, dest: str) -> None:
     """
     Splits src into N number of files and send one to each remote destinations
 
@@ -103,6 +104,12 @@ def split_copy(src, dest):
     [os.remove(x) for x in fpaths]
 
 
-def parallel_popen(commands):
+def parallel_popen(commands) -> None:
+    """
+    Parallel call to Popen
+
+    Args:
+        commands: Commands to parallelize
+    """
     processes = [Popen(cmd, shell=True) for cmd in commands]
     [p.wait() for p in processes]
