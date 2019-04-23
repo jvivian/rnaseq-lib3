@@ -10,4 +10,5 @@ setup(name='rnaseq-lib3',
       package_dir={'': 'src'},
       packages=find_packages('src'), install_requires=['requests', 'scikit-learn', 'numba', 'annoy', 'numpy',
                                                        'pandas', 'holoviews', 'scipy', 'seaborn', 'matplotlib',
-                                                       'tqdm', 'pymc3', 'statsmodels', 'boto3', 'paramiko'])
+                                                       'tqdm', 'pymc3', 'statsmodels', 'boto3', 'paramiko',
+                                                       'umap'])
