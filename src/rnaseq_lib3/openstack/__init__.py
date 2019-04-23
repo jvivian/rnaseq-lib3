@@ -1,8 +1,5 @@
-from subprocess import check_call
-from subprocess import PIPE
-from subprocess import Popen
 import os
-
+from subprocess import Popen
 
 USER = 'ubuntu'
 IPS = [
