@@ -37,7 +37,7 @@ class Weights:
 
     def _perc_df(self) -> pd.DataFrame:
         c = self.df.groupby(['tissue', 'normal-tissue'])['Median'].sum().rename("count")
-        perc = c / c.groupby(level=0).sum()
+        perc = c / c.groupby(level=0).sum() * 100
         return perc.reset_index()
 
     def plot_match_scatter(self, out_dir: str = None):
