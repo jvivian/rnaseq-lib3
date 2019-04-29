@@ -61,7 +61,7 @@ class Weights:
         plt.ylabel('GTEx Matched Tissue Weight')
         plt.title('TCGA Tumor Samples and Model Weight for GTEx Matched Tissue')
         if out_dir:
-            plt.save_fig(os.path.join(out_dir, 'matched_weight_scatter.svg'))
+            plt.savefig(os.path.join(out_dir, 'matched_weight_scatter.svg'))
         return ax
 
     def plot_perc_heatmap(self, out_dir: str = None):
@@ -77,5 +77,5 @@ class Weights:
         plt.ylabel('GTEx Tissue')
         plt.title('Weight Percentage of Tumor to GTEx Tissue (n=100)')
         if out_dir:
-            plt.save_fig(os.path.join(out_dir, 'weight_perc_heatmap.svg'))
+            plt.savefig(os.path.join(out_dir, 'weight_perc_heatmap.svg'))
         return ax
