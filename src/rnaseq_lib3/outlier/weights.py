@@ -8,8 +8,9 @@ from tqdm.autonotebook import tqdm
 
 class Weights:
 
-    def __init__(self, tumor: pd.DataFrame, sample_dir: str):
-        self.tumor = tumor
+    def __init__(self, tumor_path: pd.DataFrame, sample_dir: str):
+        self.tumor_path = tumor_path
+        self.tumor = self._load_tumor()
         self.sample_dir = sample_dir
         self.df = self._weight_df()
         self.perc = self._perc_df()
@@ -36,9 +37,22 @@ class Weights:
         return pd.concat(weights).reset_index(drop=True)
 
     def _perc_df(self) -> pd.DataFrame:
-        c = self.df.groupby(['tissue', 'normal-tissue'])['Median'].sum().rename("count")
+        c = self.df.groupby(['tissue', 'normal_tissue'])['Median'].sum().rename("count")
         perc = c / c.groupby(level=0).sum() * 100
         return perc.reset_index()
+
+    def _load_tumor(self):
+        if self.tumor_path.endswith(".csv"):
+            df = pd.read_csv(self.tumor_path, index_col=0)
+        elif self.tumor_path.endswith(".tsv"):
+            df = pd.read_csv(self.tumor_path, sep="\t", index_col=0)
+        else:
+            try:
+                df = pd.read_hdf(self.tumor_path)
+            except Exception as e:
+                print(e)
+                raise RuntimeError(f"Failed to open DataFrame: {self.tumor_path}")
+        return df
 
     def plot_match_scatter(self, out_dir: str = None):
         """
