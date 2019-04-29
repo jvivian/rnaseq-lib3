@@ -37,11 +37,18 @@ class Weights:
         return pd.concat(weights).reset_index(drop=True)
 
     def _perc_df(self) -> pd.DataFrame:
+        """
+        Converts DataFrame of weights into a DataFrame of percentages
+
+        Returns:
+            Weight percentage DataFrame
+        """
         c = self.df.groupby(['tissue', 'normal_tissue'])['Median'].sum().rename("count")
         perc = c / c.groupby(level=0).sum() * 100
         return perc.reset_index()
 
     def _load_tumor(self):
+        print(f'Reading in {self.tumor_path}')
         if self.tumor_path.endswith(".csv"):
             df = pd.read_csv(self.tumor_path, index_col=0)
         elif self.tumor_path.endswith(".tsv"):
@@ -59,17 +66,17 @@ class Weights:
         Scatterplot of samples by tissue and their matched tissue model weight
 
         Args:
-            out_dir:
+            out_dir: Optional output directory
 
         Returns:
-
+            Plot axes object
         """
         df = self.df
         # Subset for matched-tissue samples
         df = df[df.normal_tissue == df.tissue]
 
         f, ax = plt.subplots(figsize=(8, 4))
-        sns.swarmplot(data=df, x='tissue', y='weight')
+        sns.swarmplot(data=df, x='tissue', y='Median')
         plt.xticks(rotation=45)
         plt.xlabel('Tissue')
         plt.ylabel('GTEx Matched Tissue Weight')
@@ -79,8 +86,17 @@ class Weights:
         return ax
 
     def plot_perc_heatmap(self, out_dir: str = None):
+        """
+        Heatmap of weight percentages by
+
+        Args:
+            out_dir: Optional output directory
+
+        Returns:
+            Plot axes object
+        """
         f, ax = plt.subplots(figsize=(8, 7))
-        perc_heat = self.perc.pivot(index='normal-tissue', columns='tissue', values='count')
+        perc_heat = self.perc.pivot(index='normal_tissue', columns='tissue', values='count')
         sns.heatmap(
             perc_heat.apply(lambda x: round(x, 2)),
             cmap='Blues',
