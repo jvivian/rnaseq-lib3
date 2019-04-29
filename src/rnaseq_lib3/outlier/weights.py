@@ -7,7 +7,6 @@ from tqdm.autonotebook import tqdm
 
 
 class Weights:
-
     def __init__(self, tumor_path: pd.DataFrame, sample_dir: str):
         self.tumor_path = tumor_path
         self.tumor = self._load_tumor()
@@ -28,12 +27,16 @@ class Weights:
         tissues = self.tumor.tissue
         for sample in tqdm(os.listdir(self.sample_dir)):
             sample_tissue = tissues.loc[sample]
-            w = pd.read_csv(os.path.join(self.sample_dir, sample, 'weights.tsv'), sep='\t', index_col=0)
+            w = pd.read_csv(
+                os.path.join(self.sample_dir, sample, "weights.tsv"),
+                sep="\t",
+                index_col=0,
+            )
             w = w.reset_index()
-            w.columns = ['normal_tissue', 'Median', 'std']
-            w['tissue'] = sample_tissue
-            w['sample'] = sample
-            weights.append(w.drop('std', axis=1))
+            w.columns = ["normal_tissue", "Median", "std"]
+            w["tissue"] = sample_tissue
+            w["sample"] = sample
+            weights.append(w.drop("std", axis=1))
         return pd.concat(weights).reset_index(drop=True)
 
     def _perc_df(self) -> pd.DataFrame:
@@ -43,12 +46,12 @@ class Weights:
         Returns:
             Weight percentage DataFrame
         """
-        c = self.df.groupby(['tissue', 'normal_tissue'])['Median'].sum().rename("count")
+        c = self.df.groupby(["tissue", "normal_tissue"])["Median"].sum().rename("count")
         perc = c / c.groupby(level=0).sum() * 100
         return perc.reset_index()
 
     def _load_tumor(self):
-        print(f'Reading in {self.tumor_path}')
+        print(f"Reading in {self.tumor_path}")
         if self.tumor_path.endswith(".csv"):
             df = pd.read_csv(self.tumor_path, index_col=0)
         elif self.tumor_path.endswith(".tsv"):
@@ -73,16 +76,16 @@ class Weights:
         """
         df = self.df
         # Subset for matched-tissue samples
-        df = df[df.normal_tissue == df.tissue].sort_values('tissue')
+        df = df[df.normal_tissue == df.tissue].sort_values("tissue")
 
         f, ax = plt.subplots(figsize=(8, 4))
-        sns.swarmplot(data=df, x='tissue', y='Median')
+        sns.swarmplot(data=df, x="tissue", y="Median")
         plt.xticks(rotation=45)
-        plt.xlabel('Tissue')
-        plt.ylabel('GTEx Matched Tissue Weight')
-        plt.title('TCGA Tumor Samples and Model Weight for GTEx Matched Tissue')
+        plt.xlabel("Tissue")
+        plt.ylabel("GTEx Matched Tissue Weight")
+        plt.title("TCGA Tumor Samples and Model Weight for GTEx Matched Tissue")
         if out_dir:
-            plt.savefig(os.path.join(out_dir, 'matched_weight_scatter.svg'))
+            plt.savefig(os.path.join(out_dir, "matched_weight_scatter.svg"))
         return ax
 
     def plot_perc_heatmap(self, out_dir: str = None):
@@ -96,16 +99,18 @@ class Weights:
             Plot axes object
         """
         f, ax = plt.subplots(figsize=(8, 7))
-        perc_heat = self.perc.pivot(index='normal_tissue', columns='tissue', values='count')
+        perc_heat = self.perc.pivot(
+            index="normal_tissue", columns="tissue", values="count"
+        )
         sns.heatmap(
             perc_heat.apply(lambda x: round(x, 2)),
-            cmap='Blues',
+            cmap="Blues",
             annot=True,
-            linewidths=.5,
+            linewidths=0.5,
         )
-        plt.xlabel('Tumor Tissue')
-        plt.ylabel('GTEx Tissue')
-        plt.title('Weight Percentage of Tumor to GTEx Tissue (n=100)')
+        plt.xlabel("Tumor Tissue")
+        plt.ylabel("GTEx Tissue")
+        plt.title("Weight Percentage of Tumor to GTEx Tissue (n=100)")
         if out_dir:
-            plt.savefig(os.path.join(out_dir, 'weight_perc_heatmap.svg'))
+            plt.savefig(os.path.join(out_dir, "weight_perc_heatmap.svg"))
         return ax
