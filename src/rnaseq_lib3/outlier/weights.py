@@ -73,7 +73,7 @@ class Weights:
         """
         df = self.df
         # Subset for matched-tissue samples
-        df = df[df.normal_tissue == df.tissue]
+        df = df[df.normal_tissue == df.tissue].sort_values('tissue')
 
         f, ax = plt.subplots(figsize=(8, 4))
         sns.swarmplot(data=df, x='tissue', y='Median')
