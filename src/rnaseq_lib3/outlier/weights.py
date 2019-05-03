@@ -3,7 +3,7 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-from tqdm.autonotebook import tqdm
+sns.set_style('whitegrid')
 
 
 class Weights:
@@ -25,14 +25,11 @@ class Weights:
         # DataFrame: cols=tissue, normal_tissue, weight
         weights = []
         tissues = self.tumor.tissue
-        for sample in tqdm(os.listdir(self.sample_dir)):
+        for sample in os.listdir(self.sample_dir):
             sample_tissue = tissues.loc[sample]
             w = pd.read_csv(
                 os.path.join(self.sample_dir, sample, "weights.tsv"),
-                sep="\t",
-                index_col=0,
-            )
-            w = w.reset_index()
+                sep="\t")
             w.columns = ["normal_tissue", "Median", "std"]
             w["tissue"] = sample_tissue
             w["sample"] = sample
@@ -113,4 +110,26 @@ class Weights:
         plt.title("Weight Percentage of Tumor to GTEx Tissue (n=100)")
         if out_dir:
             plt.savefig(os.path.join(out_dir, "weight_perc_heatmap.svg"))
+        return ax
+
+    def plot_weight_boxplot(self, out_dir: str = None):
+        """
+        Boxplot of weights across all samples
+
+        Args:
+            out_dir: Optional output directory
+
+        Returns:
+            Plot axes object
+        """
+        f, ax = plt.subplots(figsize=(8, 4))
+        sns.boxplot(
+            data=self.df.sort_values("normal_tissue"), x="normal_tissue", y="Median"
+        )
+        plt.xlabel("Tissue")
+        plt.ylabel("Weight")
+        plt.ylim([0, 1])
+        plt.title("Mean Weight of Background Tissues for Mixture Samples (n=50)")
+        if out_dir:
+            plt.savefig(os.path.join(out_dir, "Mixture-weights.svg"))
         return ax
