@@ -107,7 +107,7 @@ class Weights:
         )
         plt.xlabel("Tumor Tissue")
         plt.ylabel("GTEx Tissue")
-        plt.title("Weight Percentage of Tumor to GTEx Tissue (n=100)")
+        plt.title("Average Weight of Tumor to GTEx Tissue (n=100)")
         if out_dir:
             plt.savefig(os.path.join(out_dir, "weight_perc_heatmap.svg"))
         return ax
@@ -129,7 +129,7 @@ class Weights:
         plt.xlabel("Tissue")
         plt.ylabel("Weight")
         plt.ylim([0, 1])
-        plt.title("Mean Weight of Background Tissues for Mixture Samples (n=50)")
+        plt.title("Average Weight of Background Tissues for Mixture Samples (n=50)")
         if out_dir:
             plt.savefig(os.path.join(out_dir, "Mixture-weights.svg"))
         return ax
