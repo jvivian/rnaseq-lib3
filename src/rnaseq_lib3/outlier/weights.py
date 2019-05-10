@@ -3,16 +3,20 @@ import os
 import matplotlib.pyplot as plt
 import pandas as pd
 import seaborn as sns
-sns.set_style('whitegrid')
+from sklearn.decomposition import pca
+
+sns.set_style("whitegrid")
 
 
 class Weights:
     def __init__(self, tumor_path: pd.DataFrame, sample_dir: str):
         self.tumor_path = tumor_path
         self.tumor = self._load_tumor()
+        self.genes = self.tumor.columns[5:]
         self.sample_dir = sample_dir
         self.df = self._weight_df()
         self.perc = self._perc_df()
+        self.num_samples = len(self.df["sample"].unique())
 
     def _weight_df(self) -> pd.DataFrame:
         """
@@ -28,8 +32,8 @@ class Weights:
         for sample in os.listdir(self.sample_dir):
             sample_tissue = tissues.loc[sample]
             w = pd.read_csv(
-                os.path.join(self.sample_dir, sample, "weights.tsv"),
-                sep="\t")
+                os.path.join(self.sample_dir, sample, "weights.tsv"), sep="\t"
+            )
             w.columns = ["normal_tissue", "Median", "std"]
             w["tissue"] = sample_tissue
             w["sample"] = sample
@@ -107,29 +111,27 @@ class Weights:
         )
         plt.xlabel("Tumor Tissue")
         plt.ylabel("GTEx Tissue")
-        plt.title("Average Weight of Tumor to GTEx Tissue (n=100)")
+        plt.title(f"Average Weight (%) of Tumor to GTEx Tissue (n={self.num_samples})")
         if out_dir:
             plt.savefig(os.path.join(out_dir, "weight_perc_heatmap.svg"))
         return ax
 
-    def plot_weight_boxplot(self, out_dir: str = None):
-        """
-        Boxplot of weights across all samples
+    def plot_pca_nearby_tissues(self, background_path: str, tissues, tumor_tissue):
+        df = pd.read_hdf(background_path)
+        tumor = self.tumor
+        tumor = tumor[tumor.tissue == tumor_tissue]
+        tumor["tissue"] = f"{tumor_tissue}-Tumor"
 
-        Args:
-            out_dir: Optional output directory
+        sub = df[df.tissue.isin(tissues)]
+        pca_df = pd.concat([tumor, sub]).dropna(axis=1)
+        embedding = pca.PCA(n_components=2).fit_transform(pca_df[self.genes])
+        embedding = pd.DataFrame(embedding)
+        embedding.columns = ["PCA1", "PCA2"]
+        embedding["tissue"] = list(pca_df["tissue"])
 
-        Returns:
-            Plot axes object
-        """
-        f, ax = plt.subplots(figsize=(8, 4))
-        sns.boxplot(
-            data=self.df.sort_values("normal_tissue"), x="normal_tissue", y="Median"
+        f, ax = plt.subplots(figsize=(8, 8))
+        sns.scatterplot(
+            data=embedding, x="PCA1", y="PCA2", hue="tissue", style="tissue"
         )
-        plt.xlabel("Tissue")
-        plt.ylabel("Weight")
-        plt.ylim([0, 1])
-        plt.title("Average Weight of Background Tissues for Mixture Samples (n=50)")
-        if out_dir:
-            plt.savefig(os.path.join(out_dir, "Mixture-weights.svg"))
+        plt.title(f"PCA of {tumor_tissue} and Nearby GTEx Tissues")
         return ax

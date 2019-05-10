@@ -1,11 +1,11 @@
-import pandas as pd
-import numpy as np
 import os
 from itertools import combinations
-from sklearn.decomposition import pca
 
-import seaborn as sns
 import matplotlib.pyplot as plt
+import numpy as np
+import pandas as pd
+import seaborn as sns
+from sklearn.decomposition import pca
 
 sns.set_style("whitegrid")
 
@@ -14,20 +14,6 @@ class Mixture:
     def __init__(self, df_path):
         self.df_path = df_path
         self.df = self._load_df(df_path)
-        # Choose a tissue subset with relevant matches to TCGA
-        tissues_to_include = [
-            "Adrenal",
-            "Bladder",
-            "Brain",
-            "Breast",
-            "Kidney",
-            "Liver",
-            "Lung",
-            "Prostate",
-            "Stomach",
-            "Thyroid",
-        ]
-        self.df = self.df[self.df.tissue.isin(tissues_to_include)]
         self.genes = list(self.df.columns[5:])
 
     @staticmethod
@@ -48,7 +34,20 @@ class Mixture:
 
     def select_mixture_tissues(self, number_of_pairs=10):
         """Generates N tissue pairs"""
-        df = self.df
+        # Choose a tissue subset with relevant matches to TCGA
+        tissues_to_include = [
+            "Adrenal",
+            "Bladder",
+            "Brain",
+            "Breast",
+            "Kidney",
+            "Liver",
+            "Lung",
+            "Prostate",
+            "Stomach",
+            "Thyroid",
+        ]
+        df = self.df[self.df.tissue.isin(tissues_to_include)]
         df = df.groupby("tissue").filter(lambda x: len(x) > 100)
         tissues = list(combinations(df.tissue.unique(), 2))
         ix = np.random.choice(range(len(tissues)), number_of_pairs, replace=False)
@@ -104,7 +103,7 @@ class Mixture:
                     f.write(f"{label}-{i}\t{matrix_path}\n")
 
     @staticmethod
-    def weight_df(sample_dir: str, keep_only_contributing_tissues=True) -> pd.DataFrame:
+    def weight_df(sample_dir: str, only_contributing_tissues=True) -> pd.DataFrame:
         """Creates DataFrame from weights across samples"""
         samples = os.listdir(sample_dir)
         weights = []
@@ -116,7 +115,7 @@ class Mixture:
             w.columns = ["tissue", "Median", "std"]
             w["sample"] = sample
             w["label"] = label
-            if keep_only_contributing_tissues:
+            if only_contributing_tissues:
                 w = w[w.tissue.isin([t1, t2])]
             weights.append(w.drop("std", axis=1))
         weights = pd.concat(weights).reset_index(drop=True)
@@ -149,6 +148,24 @@ class Mixture:
         plt.tight_layout()
         return ax
 
+    def plot_pca_nearby_tissues(self, matrix_path: str, tissues):
+        st_df = pd.read_hdf(matrix_path)
+        label = os.path.splitext(os.path.basename(matrix_path))[0]
+        st_df["tissue"] = "Mixture"
+        sub = self.df[self.df.tissue.isin(tissues)]
+        pca_df = pd.concat([st_df, sub]).dropna(axis=1)
+        embedding = pca.PCA(n_components=2).fit_transform(pca_df[self.genes])
+        embedding = pd.DataFrame(embedding)
+        embedding.columns = ["PCA1", "PCA2"]
+        embedding["tissue"] = list(pca_df["tissue"])
+
+        f, ax = plt.subplots(figsize=(8, 8))
+        sns.scatterplot(
+            data=embedding, x="PCA1", y="PCA2", hue="tissue", style="tissue"
+        )
+        plt.title(f"PCA of {label} Mixtures and Nearby Tissues")
+        return ax
+
     @staticmethod
     def plot_weight_swarm(wdf: pd.DataFrame):
         """Swarmplot of weights for the tissues that comprise the mixture"""
@@ -160,11 +177,12 @@ class Mixture:
         plt.axhline(0.5, c="r", alpha=0.5, ls="--")
         plt.xlabel("Mixture-Pairs")
         plt.ylabel("Beta Coefficient Median")
-        plt.title("Average Beta Coefficient Weight Across Mixture Samples")
+        plt.title(f"Average Beta Coefficient Weight Across Mixture Samples (n=100)")
         return ax
 
     @staticmethod
     def plot_weight_boxplot(wdf, label):
+        """Boxplot of weigts for a single label"""
         weights = wdf[wdf.label == label]
         f, ax = plt.subplots(figsize=(8, 4))
         sns.boxplot(data=weights, x="tissue", y="Median")
